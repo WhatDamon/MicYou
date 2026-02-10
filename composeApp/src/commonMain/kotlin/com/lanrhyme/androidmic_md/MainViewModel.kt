@@ -31,7 +31,7 @@ data class AppUiState(
     val port: String = "6000",
     val errorMessage: String? = null,
     val themeMode: ThemeMode = ThemeMode.System,
-    val seedColor: Long = 0xFF6750A4, // Default purple
+    val seedColor: Long = 0xFF6750A4, 
     val monitoringEnabled: Boolean = false,
     val sampleRate: SampleRate = SampleRate.Rate44100,
     val channelCount: ChannelCount = ChannelCount.Mono,

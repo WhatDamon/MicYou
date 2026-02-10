@@ -16,6 +16,9 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.protobuf.*
 
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
+
 actual class AudioEngine actual constructor() {
     private val _state = MutableStateFlow(StreamState.Idle)
     actual val streamState: Flow<StreamState> = _state
@@ -126,12 +129,27 @@ actual class AudioEngine actual constructor() {
                         _lastError.value = null
 
                         val buffer = ByteArray(minBufSize)
+                        val floatBuffer = if (androidAudioFormat == AudioFormat.ENCODING_PCM_FLOAT) FloatArray(minBufSize / 4) else null
                         
                         while (isActive) {
-                            val readBytes = recorder.read(buffer, 0, buffer.size)
+                            var readBytes = 0
+                            val audioData: ByteArray
+
+                            if (androidAudioFormat == AudioFormat.ENCODING_PCM_FLOAT && floatBuffer != null) {
+                                val readFloats = recorder.read(floatBuffer, 0, floatBuffer.size, AudioRecord.READ_BLOCKING)
+                                if (readFloats > 0) {
+                                    readBytes = readFloats * 4
+                                    audioData = ByteArray(readBytes)
+                                    ByteBuffer.wrap(audioData).order(ByteOrder.LITTLE_ENDIAN).asFloatBuffer().put(floatBuffer, 0, readFloats)
+                                } else {
+                                    audioData = ByteArray(0)
+                                }
+                            } else {
+                                readBytes = recorder.read(buffer, 0, buffer.size)
+                                audioData = if (readBytes > 0) buffer.copyOfRange(0, readBytes) else ByteArray(0)
+                            }
+
                             if (readBytes > 0) {
-                                val audioData = buffer.copyOfRange(0, readBytes)
-                                
                                 // 计算电平
                                 val rms = calculateRMS(audioData)
                                 _audioLevels.value = rms
@@ -141,11 +159,7 @@ actual class AudioEngine actual constructor() {
                                     buffer = audioData,
                                     sampleRate = androidSampleRate,
                                     channelCount = if (channelCount == ChannelCount.Stereo) 2 else 1,
-                                    audioFormat = when(audioFormat) {
-                                        com.lanrhyme.androidmic_md.AudioFormat.PCM_8BIT -> 8
-                                        com.lanrhyme.androidmic_md.AudioFormat.PCM_16BIT -> 16
-                                        com.lanrhyme.androidmic_md.AudioFormat.PCM_FLOAT -> 32
-                                    }
+                                    audioFormat = audioFormat.value
                                 )
                                 
                                 // 序列化

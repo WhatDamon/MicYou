@@ -90,85 +90,88 @@ fun DesktopSettings(
             
             item { HorizontalDivider() }
             
-            // 音频参数
-            item {
-                Text("音频参数", style = MaterialTheme.typography.titleMedium)
-            }
-            
-            // 采样率
-            item {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text("采样率", modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium)
-                    // Use a dropdown or just chips for simplicity
-                    var expanded by remember { mutableStateOf(false) }
-                    Box {
-                        TextButton(onClick = { expanded = true }) {
-                            Text("${state.sampleRate.value} Hz")
-                        }
-                        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-                            SampleRate.entries.forEach { rate ->
-                                DropdownMenuItem(
-                                    text = { Text("${rate.value} Hz") },
-                                    onClick = { 
-                                        viewModel.setSampleRate(rate)
-                                        expanded = false
-                                    }
-                                )
+            // 音频参数 (仅移动端，桌面端自动适配)
+            if (getPlatform().type == PlatformType.Android) {
+                // 音频参数
+                item {
+                    Text("音频参数", style = MaterialTheme.typography.titleMedium)
+                }
+                
+                // 采样率
+                item {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text("采样率", modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium)
+                        // Use a dropdown or just chips for simplicity
+                        var expanded by remember { mutableStateOf(false) }
+                        Box {
+                            TextButton(onClick = { expanded = true }) {
+                                Text("${state.sampleRate.value} Hz")
+                            }
+                            DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+                                SampleRate.entries.forEach { rate ->
+                                    DropdownMenuItem(
+                                        text = { Text("${rate.value} Hz") },
+                                        onClick = { 
+                                            viewModel.setSampleRate(rate)
+                                            expanded = false
+                                        }
+                                    )
+                                }
                             }
                         }
                     }
                 }
-            }
-            
-            // 通道数
-            item {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text("通道数", modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium)
-                    var expanded by remember { mutableStateOf(false) }
-                    Box {
-                        TextButton(onClick = { expanded = true }) {
-                            Text(state.channelCount.label)
-                        }
-                        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-                            ChannelCount.entries.forEach { count ->
-                                DropdownMenuItem(
-                                    text = { Text(count.label) },
-                                    onClick = { 
-                                        viewModel.setChannelCount(count)
-                                        expanded = false
-                                    }
-                                )
+                
+                // 通道数
+                item {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text("通道数", modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium)
+                        var expanded by remember { mutableStateOf(false) }
+                        Box {
+                            TextButton(onClick = { expanded = true }) {
+                                Text(state.channelCount.label)
+                            }
+                            DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+                                ChannelCount.entries.forEach { count ->
+                                    DropdownMenuItem(
+                                        text = { Text(count.label) },
+                                        onClick = { 
+                                            viewModel.setChannelCount(count)
+                                            expanded = false
+                                        }
+                                    )
+                                }
                             }
                         }
                     }
                 }
-            }
-            
-            // 音频格式
-            item {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text("音频格式", modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium)
-                    var expanded by remember { mutableStateOf(false) }
-                    Box {
-                        TextButton(onClick = { expanded = true }) {
-                            Text(state.audioFormat.label)
-                        }
-                        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-                            AudioFormat.entries.forEach { format ->
-                                DropdownMenuItem(
-                                    text = { Text(format.label) },
-                                    onClick = { 
-                                        viewModel.setAudioFormat(format)
-                                        expanded = false
-                                    }
-                                )
+                
+                // 音频格式
+                item {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text("音频格式", modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium)
+                        var expanded by remember { mutableStateOf(false) }
+                        Box {
+                            TextButton(onClick = { expanded = true }) {
+                                Text(state.audioFormat.label)
+                            }
+                            DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+                                AudioFormat.entries.forEach { format ->
+                                    DropdownMenuItem(
+                                        text = { Text(format.label) },
+                                        onClick = { 
+                                            viewModel.setAudioFormat(format)
+                                            expanded = false
+                                        }
+                                    )
+                                }
                             }
                         }
                     }
                 }
-            }
 
-            item { HorizontalDivider() }
+                item { HorizontalDivider() }
+            }
             
             // 音频处理 (仅桌面端)
             if (getPlatform().type == PlatformType.Desktop) {

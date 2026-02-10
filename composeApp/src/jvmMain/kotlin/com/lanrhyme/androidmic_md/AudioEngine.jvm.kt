@@ -222,7 +222,7 @@ actual class AudioEngine actual constructor() {
                     }
                     
                     // Process Audio
-                    val processedBuffer = processAudio(packet.buffer)
+                    val processedBuffer = processAudio(packet.buffer, packet.audioFormat)
                     
                     if (processedBuffer != null) {
                         if (!isUsingCable && !isMonitoring) {
@@ -236,13 +236,6 @@ actual class AudioEngine actual constructor() {
                         // Calculate levels (post-process)
                         val rms = calculateRMS(processedBuffer)
                         _audioLevels.value = rms
-                    } else {
-                        // VAD Silence (should not happen with current processAudio logic, but safe fallback)
-                        _audioLevels.value = 0f
-                        
-                        // Write silence to maintain stream continuity
-                        val silence = ByteArray(packet.buffer.size)
-                        monitoringLine?.write(silence, 0, silence.size)
                     }
                     
                 } catch (e: Exception) {
@@ -256,11 +249,39 @@ actual class AudioEngine actual constructor() {
         }
     }
     
-    private fun processAudio(buffer: ByteArray): ByteArray? {
+    private fun processAudio(buffer: ByteArray, format: Int): ByteArray? {
         // Convert to ShortArray for processing
-        val shorts = ShortArray(buffer.size / 2)
-        for (i in shorts.indices) {
-            shorts[i] = ((buffer[i * 2 + 1].toInt() shl 8) or (buffer[i * 2].toInt() and 0xFF)).toShort()
+        val shorts: ShortArray
+        
+        when (format) {
+            4, 32 -> { // PCM_FLOAT (32-bit Float)
+                shorts = ShortArray(buffer.size / 4)
+                for (i in shorts.indices) {
+                    val byteIndex = i * 4
+                    // Little Endian
+                    val bits = (buffer[byteIndex].toInt() and 0xFF) or
+                               ((buffer[byteIndex + 1].toInt() and 0xFF) shl 8) or
+                               ((buffer[byteIndex + 2].toInt() and 0xFF) shl 16) or
+                               ((buffer[byteIndex + 3].toInt() and 0xFF) shl 24)
+                    val sample = Float.fromBits(bits)
+                    // Clamp and convert to 16-bit PCM
+                    shorts[i] = (sample * 32767.0f).toInt().coerceIn(-32768, 32767).toShort()
+                }
+            }
+            3, 8 -> { // PCM_8BIT (Unsigned 8-bit)
+                 shorts = ShortArray(buffer.size)
+                 for (i in shorts.indices) {
+                     // 8-bit PCM is usually unsigned 0-255. 128 is 0.
+                     val sample = (buffer[i].toInt() and 0xFF) - 128
+                     shorts[i] = (sample * 256).toShort()
+                 }
+            }
+            else -> { // PCM_16BIT (Default)
+                shorts = ShortArray(buffer.size / 2)
+                for (i in shorts.indices) {
+                    shorts[i] = ((buffer[i * 2 + 1].toInt() shl 8) or (buffer[i * 2].toInt() and 0xFF)).toShort()
+                }
+            }
         }
         
         // 1. VAD (Simple RMS Gate)
@@ -274,7 +295,7 @@ actual class AudioEngine actual constructor() {
              val thresholdRMS = vadThreshold * 50.0
              if (rms < thresholdRMS) {
                  // Return silence buffer to maintain stream continuity and prevent underruns
-                 return ByteArray(buffer.size)
+                 return ByteArray(shorts.size * 2)
              }
         }
         
@@ -332,7 +353,7 @@ actual class AudioEngine actual constructor() {
         }
 
         // Convert back to ByteArray
-        val outBuffer = ByteArray(buffer.size)
+        val outBuffer = ByteArray(shorts.size * 2)
         for (i in shorts.indices) {
             val s = shorts[i].toInt()
             outBuffer[i * 2] = (s and 0xFF).toByte()
