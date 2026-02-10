@@ -1,40 +1,57 @@
-This is a Kotlin Multiplatform project targeting Android, Desktop (JVM).
+# MicYou
 
-* [/composeApp](./composeApp/src) is for code that will be shared across your Compose Multiplatform applications.
-  It contains several subfolders:
-  - [commonMain](./composeApp/src/commonMain/kotlin) is for code that’s common for all targets.
-  - Other folders are for Kotlin code that will be compiled for only the platform indicated in the folder name.
-    For example, if you want to use Apple’s CoreCrypto for the iOS part of your Kotlin app,
-    the [iosMain](./composeApp/src/iosMain/kotlin) folder would be the right place for such calls.
-    Similarly, if you want to edit the Desktop (JVM) specific part, the [jvmMain](./composeApp/src/jvmMain/kotlin)
-    folder is the appropriate location.
+<p align="center">
+  <img src="./img/app_icon.png" width="128" height="128" />
+</p>
 
-### Build and Run Android Application
+<p align="center">
+  <a href="./README_ZH.md">简体中文</a> | <b>English</b>
+</p>
 
-To build and run the development version of the Android app, use the run configuration from the run widget
-in your IDE’s toolbar or build it directly from the terminal:
-- on macOS/Linux
-  ```shell
-  ./gradlew :composeApp:assembleDebug
-  ```
-- on Windows
-  ```shell
-  .\gradlew.bat :composeApp:assembleDebug
-  ```
+MicYou is a powerful tool that turns your Android device into a high-quality wireless microphone for your PC. Built with Kotlin Multiplatform and Jetpack Compose/Material 3.
 
-### Build and Run Desktop (JVM) Application
+Based on the [AndroidMic](https://github.com/team-br/AndroidMic) project.
 
-To build and run the development version of the desktop app, use the run configuration from the run widget
-in your IDE’s toolbar or run it directly from the terminal:
-- on macOS/Linux
-  ```shell
-  ./gradlew :composeApp:run
-  ```
-- on Windows
-  ```shell
-  .\gradlew.bat :composeApp:run
-  ```
+## Features
 
----
+- **Multiple Connection Modes**: Support for Wi-Fi, USB (ADB/AOA), and Bluetooth.
+- **Audio Processing**: Built-in Noise Suppression, Auto Gain Control (AGC), and Dereverberation.
+- **Cross-Platform**:
+  - **Android Client**: Modern Material 3 interface, dark/light theme support.
+  - **Desktop Server**: Receive audio on Windows.
+- **Virtual Microphone**: Works seamlessly with VB-Cable to act as a system microphone input.
+- **Customizable**: Adjust sample rate, channel count, and audio format.
 
-Learn more about [Kotlin Multiplatform](https://www.jetbrains.com/help/kotlin-multiplatform-dev/get-started.html)…
+## Screenshots
+
+### Android App
+| Main Screen | Settings |
+|:---:|:---:|
+| <img src=".img/android_screenshot_main.jpg" width="300" /> | <img src=".img/android_screenshot_settings.jpg" width="300" /> |
+
+### Desktop App
+<img src=".img/pc_screenshot.png" width="600" />
+
+## Getting Started
+
+### Android
+1. Download and install the APK on your Android device.
+2. Ensure your device is on the same network as your PC (for Wi-Fi) or connected via USB.
+
+### Desktop
+1. Run the desktop application.
+2. Configure the connection mode to match the Android app.
+
+## Building from Source
+
+This project is built using Kotlin Multiplatform.
+
+**Android:**
+```bash
+./gradlew :composeApp:assembleDebug
+```
+
+**Desktop:**
+```bash
+./gradlew :composeApp:run
+```
