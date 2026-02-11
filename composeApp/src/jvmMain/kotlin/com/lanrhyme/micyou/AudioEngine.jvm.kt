@@ -92,6 +92,10 @@ actual class AudioEngine actual constructor() {
     private var denoiserLeft: Denoiser? = null
     private var denoiserRight: Denoiser? = null
 
+    private var dereverbBufferLeft: IntArray? = null
+    private var dereverbBufferRight: IntArray? = null
+    private var dereverbIndex: Int = 0
+
     actual val installProgress: Flow<String?> = VBCableManager.installProgress
     
     actual suspend fun installDriver() {
@@ -480,14 +484,136 @@ actual class AudioEngine actual constructor() {
         }
         
         // --- Audio Processing Chain ---
-        var processedShorts = shorts
-        
-        // Amplification
+        val processedShorts = shorts
+
+        var speechProbability: Float? = null
+
+        if (enableNS && nsType == NoiseReductionType.RNNoise) {
+            if (denoiserLeft == null) denoiserLeft = Denoiser()
+            if (channelCount >= 2 && denoiserRight == null) denoiserRight = Denoiser()
+
+            val frameSize = 480
+            val framesPerChannel = processedShorts.size / channelCount
+            val frameCount = framesPerChannel / frameSize
+
+            if (frameCount > 0 && (channelCount == 1 || channelCount == 2)) {
+                val left = ShortArray(frameSize)
+                val right = if (channelCount == 2) ShortArray(frameSize) else null
+
+                var probSum = 0f
+                var probN = 0
+
+                for (f in 0 until frameCount) {
+                    val base = f * frameSize * channelCount
+                    if (channelCount == 1) {
+                        for (i in 0 until frameSize) {
+                            left[i] = processedShorts[base + i]
+                        }
+                        val p = denoiserLeft!!.denoiseInPlace(left)
+                        for (i in 0 until frameSize) {
+                            processedShorts[base + i] = left[i]
+                        }
+                        probSum += p
+                        probN++
+                    } else {
+                        for (i in 0 until frameSize) {
+                            val idx = base + i * 2
+                            left[i] = processedShorts[idx]
+                            right!![i] = processedShorts[idx + 1]
+                        }
+                        val pL = denoiserLeft!!.denoiseInPlace(left)
+                        val pR = denoiserRight!!.denoiseInPlace(right!!)
+                        for (i in 0 until frameSize) {
+                            val idx = base + i * 2
+                            processedShorts[idx] = left[i]
+                            processedShorts[idx + 1] = right!![i]
+                        }
+                        probSum += ((pL + pR) * 0.5f)
+                        probN++
+                    }
+                }
+
+                if (probN > 0) {
+                    speechProbability = probSum / probN.toFloat()
+                }
+            }
+        }
+
+        if (enableDereverb && dereverbLevel > 0f && (channelCount == 1 || channelCount == 2)) {
+            val delay = 480
+            if (channelCount == 1) {
+                val buf = dereverbBufferLeft ?: IntArray(delay).also { dereverbBufferLeft = it }
+                for (i in processedShorts.indices) {
+                    val delayed = buf[dereverbIndex]
+                    val current = processedShorts[i].toInt()
+                    buf[dereverbIndex] = current
+                    val out = (current - (delayed * dereverbLevel).toInt()).coerceIn(-32768, 32767)
+                    processedShorts[i] = out.toShort()
+                    dereverbIndex++
+                    if (dereverbIndex >= delay) dereverbIndex = 0
+                }
+            } else {
+                val bufL = dereverbBufferLeft ?: IntArray(delay).also { dereverbBufferLeft = it }
+                val bufR = dereverbBufferRight ?: IntArray(delay).also { dereverbBufferRight = it }
+                var i = 0
+                while (i + 1 < processedShorts.size) {
+                    val delayedL = bufL[dereverbIndex]
+                    val delayedR = bufR[dereverbIndex]
+                    val currentL = processedShorts[i].toInt()
+                    val currentR = processedShorts[i + 1].toInt()
+                    bufL[dereverbIndex] = currentL
+                    bufR[dereverbIndex] = currentR
+                    val outL = (currentL - (delayedL * dereverbLevel).toInt()).coerceIn(-32768, 32767)
+                    val outR = (currentR - (delayedR * dereverbLevel).toInt()).coerceIn(-32768, 32767)
+                    processedShorts[i] = outL.toShort()
+                    processedShorts[i + 1] = outR.toShort()
+                    dereverbIndex++
+                    if (dereverbIndex >= delay) dereverbIndex = 0
+                    i += 2
+                }
+            }
+        }
+
+        if (enableAGC && agcTargetLevel > 0) {
+            var peak = 0
+            for (s in processedShorts) {
+                val a = kotlin.math.abs(s.toInt())
+                if (a > peak) peak = a
+            }
+            if (peak > 0) {
+                val desiredGain = (agcTargetLevel.toFloat() / peak.toFloat()).coerceIn(0.1f, 10.0f)
+                agcEnvelope = if (agcEnvelope == 0f) desiredGain else (agcEnvelope * 0.95f + desiredGain * 0.05f)
+                val gain = agcEnvelope
+                for (i in processedShorts.indices) {
+                    val v = (processedShorts[i].toInt() * gain).toInt().coerceIn(-32768, 32767)
+                    processedShorts[i] = v.toShort()
+                }
+            }
+        }
+
         if (amplification != 1.0f) {
             for (i in processedShorts.indices) {
-                 val sample = processedShorts[i].toInt()
-                 val amplified = (sample * amplification).toInt()
-                 processedShorts[i] = amplified.coerceIn(-32768, 32767).toShort()
+                val sample = processedShorts[i].toInt()
+                val amplified = (sample * amplification).toInt()
+                processedShorts[i] = amplified.coerceIn(-32768, 32767).toShort()
+            }
+        }
+
+        if (enableVAD) {
+            val threshold = vadThreshold.coerceIn(0, 100) / 100f
+            val speech = speechProbability?.let { it >= threshold } ?: run {
+                var sum = 0.0
+                for (s in processedShorts) {
+                    val n = s.toDouble() / 32768.0
+                    sum += n * n
+                }
+                val rms = if (processedShorts.isNotEmpty()) kotlin.math.sqrt(sum / processedShorts.size.toDouble()).toFloat() else 0f
+                rms >= (threshold * 0.12f)
+            }
+            if (!speech) {
+                for (i in processedShorts.indices) {
+                    processedShorts[i] = 0
+                }
             }
         }
 
