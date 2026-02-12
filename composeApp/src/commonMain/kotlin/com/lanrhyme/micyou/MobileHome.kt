@@ -162,26 +162,6 @@ fun MobileHome(viewModel: MainViewModel) {
                             )
                         }
                     }
-
-                    if (isClient && state.mode == ConnectionMode.Usb) {
-                        val portForAdb = state.port.toIntOrNull()?.takeIf { it in 1..65535 } ?: 6000
-                        val cmd = "adb reverse tcp:$portForAdb tcp:$portForAdb"
-
-                        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                            Text(
-                                text = strings.usbAdbReverseHint,
-                                style = MaterialTheme.typography.labelMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                            SelectionContainer {
-                                Text(
-                                    text = cmd,
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.primary
-                                )
-                            }
-                        }
-                    }
                 }
              }
 

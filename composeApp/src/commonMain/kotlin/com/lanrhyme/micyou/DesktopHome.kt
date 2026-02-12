@@ -328,12 +328,57 @@ fun DesktopHome(
                         
                         if (state.errorMessage != null) {
                             Spacer(modifier = Modifier.height(4.dp))
-                            Text(
-                                state.errorMessage ?: "", 
-                                style = MaterialTheme.typography.labelSmall, 
-                                color = MaterialTheme.colorScheme.error,
-                                maxLines = 2
-                            )
+                            
+                            if (state.errorMessage!!.contains("adb reverse")) {
+                                val parts = state.errorMessage!!.split("\n")
+                                val errorTitle = parts.firstOrNull() ?: state.errorMessage!!
+                                val cmd = parts.drop(1).joinToString("\n").substringAfter("：").trim()
+                                
+                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                    Text(
+                                        errorTitle, 
+                                        style = MaterialTheme.typography.labelSmall, 
+                                        color = MaterialTheme.colorScheme.error,
+                                        maxLines = 2,
+                                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                                    )
+                                    if (cmd.isNotEmpty()) {
+                                        Spacer(modifier = Modifier.height(4.dp))
+                                        Card(
+                                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer),
+                                            modifier = Modifier.fillMaxWidth()
+                                        ) {
+                                            Column(
+                                                modifier = Modifier.padding(8.dp),
+                                                horizontalAlignment = Alignment.CenterHorizontally
+                                            ) {
+                                                Text(
+                                                    strings.usbAdbReverseHint,
+                                                    style = MaterialTheme.typography.labelSmall,
+                                                    color = MaterialTheme.colorScheme.onErrorContainer
+                                                )
+                                                SelectionContainer {
+                                                    Text(
+                                                        cmd,
+                                                        style = MaterialTheme.typography.bodySmall,
+                                                        color = MaterialTheme.colorScheme.onErrorContainer,
+                                                        fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
+                                                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                                                    )
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            } else {
+                                Text(
+                                    state.errorMessage ?: "", 
+                                    style = MaterialTheme.typography.labelSmall, 
+                                    color = MaterialTheme.colorScheme.error,
+                                    maxLines = 2,
+                                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                                )
+                            }
                         }
                     }
 
