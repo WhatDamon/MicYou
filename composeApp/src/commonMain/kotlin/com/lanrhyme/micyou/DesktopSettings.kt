@@ -142,7 +142,7 @@ fun SettingsContent(section: SettingsSection, viewModel: MainViewModel) {
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
         when (section) {
             SettingsSection.General -> {
-                Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)) {
+                Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
                     Column(modifier = Modifier.padding(8.dp)) {
                         // Language Setting
                         ListItem(
@@ -205,7 +205,7 @@ fun SettingsContent(section: SettingsSection, viewModel: MainViewModel) {
                 }
             }
             SettingsSection.Appearance -> {
-                Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)) {
+                Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
                      Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
                          Text(strings.themeLabel, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
                          LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -270,179 +270,180 @@ fun SettingsContent(section: SettingsSection, viewModel: MainViewModel) {
             SettingsSection.Audio -> {
                 if (platform.type == PlatformType.Android) {
                     // Android 音频参数
-                     Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)) {
-                        Column {
-                            ListItem(
-                                headlineContent = { Text(strings.sampleRateLabel) },
-                                trailingContent = {
-                                     var expanded by remember { mutableStateOf(false) }
-                                     Box {
-                                         TextButton(onClick = { expanded = true }) { Text("${state.sampleRate.value} Hz") }
-                                         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-                                             SampleRate.entries.forEach { rate ->
-                                                 DropdownMenuItem(text = { Text("${rate.value} Hz") }, onClick = { viewModel.setSampleRate(rate); expanded = false })
-                                             }
+                    Column {
+                        ListItem(
+                            headlineContent = { Text(strings.sampleRateLabel) },
+                            trailingContent = {
+                                 var expanded by remember { mutableStateOf(false) }
+                                 Box {
+                                     TextButton(onClick = { expanded = true }) { Text("${state.sampleRate.value} Hz") }
+                                     DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+                                         SampleRate.entries.forEach { rate ->
+                                             DropdownMenuItem(text = { Text("${rate.value} Hz") }, onClick = { viewModel.setSampleRate(rate); expanded = false })
                                          }
                                      }
-                                }
-                            )
-                            HorizontalDivider()
-                            ListItem(
-                                headlineContent = { Text(strings.channelCountLabel) },
-                                trailingContent = {
-                                     var expanded by remember { mutableStateOf(false) }
-                                     Box {
-                                         TextButton(onClick = { expanded = true }) { Text(state.channelCount.label) }
-                                         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-                                             ChannelCount.entries.forEach { count ->
-                                                 DropdownMenuItem(text = { Text(count.label) }, onClick = { viewModel.setChannelCount(count); expanded = false })
-                                             }
+                                 }
+                            }
+                        )
+                        HorizontalDivider()
+                        ListItem(
+                            headlineContent = { Text(strings.channelCountLabel) },
+                            trailingContent = {
+                                 var expanded by remember { mutableStateOf(false) }
+                                 Box {
+                                     TextButton(onClick = { expanded = true }) { Text(state.channelCount.label) }
+                                     DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+                                         ChannelCount.entries.forEach { count ->
+                                             DropdownMenuItem(text = { Text(count.label) }, onClick = { viewModel.setChannelCount(count); expanded = false })
                                          }
                                      }
-                                }
-                            )
-                            HorizontalDivider()
-                            ListItem(
-                                headlineContent = { Text(strings.audioFormatLabel) },
-                                trailingContent = {
-                                     var expanded by remember { mutableStateOf(false) }
-                                     Box {
-                                         TextButton(onClick = { expanded = true }) { Text(state.audioFormat.label) }
-                                         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-                                             AudioFormat.entries.forEach { format ->
-                                                 DropdownMenuItem(text = { Text(format.label) }, onClick = { viewModel.setAudioFormat(format); expanded = false })
-                                             }
+                                 }
+                            }
+                        )
+                        HorizontalDivider()
+                        ListItem(
+                            headlineContent = { Text(strings.audioFormatLabel) },
+                            trailingContent = {
+                                 var expanded by remember { mutableStateOf(false) }
+                                 Box {
+                                     TextButton(onClick = { expanded = true }) { Text(state.audioFormat.label) }
+                                     DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+                                         AudioFormat.entries.forEach { format ->
+                                             DropdownMenuItem(text = { Text(format.label) }, onClick = { viewModel.setAudioFormat(format); expanded = false })
                                          }
                                      }
-                                }
-                            )
-                            HorizontalDivider()
-                            // Android System Audio Processing (Combined NS + AGC)
-                            ListItem(
-                                headlineContent = { Text(strings.androidAudioProcessingLabel) },
-                                supportingContent = { Text(strings.androidAudioProcessingDesc) },
-                                trailingContent = {
-                                    Switch(
-                                        checked = state.enableNS || state.enableAGC,
-                                        onCheckedChange = { viewModel.setAndroidAudioProcessing(it) }
-                                    )
-                                },
-                                modifier = Modifier.clickable { viewModel.setAndroidAudioProcessing(!(state.enableNS || state.enableAGC)) }
-                            )
-                        }
-                     }
+                                 }
+                            }
+                        )
+                        HorizontalDivider()
+                        // Android System Audio Processing (Combined NS + AGC)
+                        ListItem(
+                            headlineContent = { Text(strings.androidAudioProcessingLabel) },
+                            supportingContent = { Text(strings.androidAudioProcessingDesc) },
+                            trailingContent = {
+                                Switch(
+                                    checked = state.enableNS || state.enableAGC,
+                                    onCheckedChange = { viewModel.setAndroidAudioProcessing(it) }
+                                )
+                            },
+                            modifier = Modifier.clickable { viewModel.setAndroidAudioProcessing(!(state.enableNS || state.enableAGC)) }
+                        )
+                    }
                 } else {
                     // Desktop Audio Processing
-                    Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)) {
-                         Column(modifier = Modifier.padding(8.dp)) {
-                            var showApplied by remember { mutableStateOf(false) }
-                            LaunchedEffect(state.audioConfigRevision) {
-                                if (state.audioConfigRevision > 0) {
-                                    showApplied = true
-                                    delay(1200)
-                                    showApplied = false
-                                }
+                    Column(modifier = Modifier.padding(8.dp)) {
+                        var showApplied by remember { mutableStateOf(false) }
+                        LaunchedEffect(state.audioConfigRevision) {
+                            if (state.audioConfigRevision > 0) {
+                                showApplied = true
+                                delay(1200)
+                                showApplied = false
                             }
-                            if (showApplied) {
-                                Text(
-                                    strings.audioConfigAppliedLabel,
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.primary,
-                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                                )
-                            }
-                            // Noise Suppression
-                            ListItem(
-                                headlineContent = { Text(strings.enableNsLabel) },
-                                trailingContent = { Switch(checked = state.enableNS, onCheckedChange = { viewModel.setEnableNS(it) }) },
-                                modifier = Modifier.clickable { viewModel.setEnableNS(!state.enableNS) }
+                        }
+                        if (showApplied) {
+                            Text(
+                                strings.audioConfigAppliedLabel,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                             )
-                            if (state.enableNS) {
-                                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
-                                    NoiseReductionType.entries.filter { it != NoiseReductionType.None }.forEach { type ->
-                                        FilterChip(
-                                            selected = state.nsType == type,
-                                            onClick = { viewModel.setNsType(type) },
-                                            label = { Text(type.label) }
-                                        )
-                                    }
-                                }
-                            }
-                            
-                            HorizontalDivider()
-                            
-                            // AGC
+                        }
+                        // Noise Suppression
+                        ListItem(
+                            headlineContent = { Text(strings.enableNsLabel) },
+                            trailingContent = { Switch(checked = state.enableNS, onCheckedChange = { viewModel.setEnableNS(it) }) },
+                            modifier = Modifier.clickable { viewModel.setEnableNS(!state.enableNS) }
+                        )
+                        if (state.enableNS) {
                             ListItem(
-                                headlineContent = { Text(strings.enableAgcLabel) },
-                                trailingContent = { Switch(checked = state.enableAGC, onCheckedChange = { viewModel.setEnableAGC(it) }) },
-                                modifier = Modifier.clickable { viewModel.setEnableAGC(!state.enableAGC) }
-                            )
-                            if (state.enableAGC) {
-                                Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
-                                    Text("${strings.agcTargetLabel}: ${state.agcTargetLevel}", style = MaterialTheme.typography.bodySmall)
-                                    Slider(
-                                        value = state.agcTargetLevel.toFloat(),
-                                        onValueChange = { viewModel.setAgcTargetLevel(it.toInt()) },
-                                        valueRange = 8000f..65535f
-                                    )
-                                }
-                            }
-                            
-                            HorizontalDivider()
-
-                            // VAD
-                            ListItem(
-                                headlineContent = { Text(strings.enableVadLabel) },
-                                trailingContent = { Switch(checked = state.enableVAD, onCheckedChange = { viewModel.setEnableVAD(it) }) },
-                                modifier = Modifier.clickable { viewModel.setEnableVAD(!state.enableVAD) }
-                            )
-                            if (state.enableVAD) {
-                                Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
-                                    Text("${strings.vadThresholdLabel}: ${state.vadThreshold}", style = MaterialTheme.typography.bodySmall)
-                                    Slider(
-                                        value = state.vadThreshold.toFloat(),
-                                        onValueChange = { viewModel.setVadThreshold(it.toInt()) },
-                                        valueRange = 0f..100f
-                                    )
-                                }
-                            }
-                            
-                            HorizontalDivider()
-
-                            // Dereverb
-                            ListItem(
-                                headlineContent = { Text(strings.enableDereverbLabel) },
-                                trailingContent = { Switch(checked = state.enableDereverb, onCheckedChange = { viewModel.setEnableDereverb(it) }) },
-                                modifier = Modifier.clickable { viewModel.setEnableDereverb(!state.enableDereverb) }
-                            )
-                            if (state.enableDereverb) {
-                                Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
-                                    Text("${strings.dereverbLevelLabel}: ${((state.dereverbLevel * 100).toInt()) / 100f}", style = MaterialTheme.typography.bodySmall)
-                                    Slider(
-                                        value = state.dereverbLevel,
-                                        onValueChange = { viewModel.setDereverbLevel(it) },
-                                        valueRange = 0.0f..1.0f
-                                    )
-                                }
-                            }
-                            
-                            HorizontalDivider()
-
-                            // Amplification
-                            ListItem(
-                                headlineContent = { Text(strings.amplificationLabel) },
-                                supportingContent = {
-                                    Column {
-                                        Text("${strings.amplificationMultiplierLabel}: ${((state.amplification * 10).toInt()) / 10f}x", style = MaterialTheme.typography.bodySmall)
-                                        Slider(
-                                            value = state.amplification,
-                                            onValueChange = { viewModel.setAmplification(it) },
-                                            valueRange = 0.0f..30.0f
-                                        )
-                                    }
+                                headlineContent = { Text(strings.nsTypeLabel) },
+                                trailingContent = {
+                                     var expanded by remember { mutableStateOf(false) }
+                                     Box {
+                                         TextButton(onClick = { expanded = true }) { Text(state.nsType.name) }
+                                         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+                                             NoiseReductionType.entries.forEach { type ->
+                                                 DropdownMenuItem(text = { Text(type.name) }, onClick = { viewModel.setNsType(type); expanded = false })
+                                             }
+                                         }
+                                     }
                                 }
                             )
                         }
+                        
+                        HorizontalDivider()
+
+                        // AGC
+                        ListItem(
+                            headlineContent = { Text(strings.enableAgcLabel) },
+                            trailingContent = { Switch(checked = state.enableAGC, onCheckedChange = { viewModel.setEnableAGC(it) }) },
+                            modifier = Modifier.clickable { viewModel.setEnableAGC(!state.enableAGC) }
+                        )
+                        if (state.enableAGC) {
+                             Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
+                                 Text("${strings.agcTargetLabel}: ${state.agcTargetLevel}", style = MaterialTheme.typography.bodySmall)
+                                 Slider(
+                                     value = state.agcTargetLevel.toFloat(),
+                                     onValueChange = { viewModel.setAgcTargetLevel(it.toInt()) },
+                                     valueRange = 0f..100f
+                                 )
+                             }
+                         }
+                        
+                        HorizontalDivider()
+
+                        // VAD
+                        ListItem(
+                            headlineContent = { Text(strings.enableVadLabel) },
+                            trailingContent = { Switch(checked = state.enableVAD, onCheckedChange = { viewModel.setEnableVAD(it) }) },
+                            modifier = Modifier.clickable { viewModel.setEnableVAD(!state.enableVAD) }
+                        )
+                        if (state.enableVAD) {
+                            Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
+                                Text("${strings.vadThresholdLabel}: ${state.vadThreshold}", style = MaterialTheme.typography.bodySmall)
+                                Slider(
+                                    value = state.vadThreshold.toFloat(),
+                                    onValueChange = { viewModel.setVadThreshold(it.toInt()) },
+                                    valueRange = 0f..100f
+                                )
+                            }
+                        }
+                        
+                        HorizontalDivider()
+
+                        // Dereverb
+                        ListItem(
+                            headlineContent = { Text(strings.enableDereverbLabel) },
+                            trailingContent = { Switch(checked = state.enableDereverb, onCheckedChange = { viewModel.setEnableDereverb(it) }) },
+                            modifier = Modifier.clickable { viewModel.setEnableDereverb(!state.enableDereverb) }
+                        )
+                        if (state.enableDereverb) {
+                            Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
+                                Text("${strings.dereverbLevelLabel}: ${((state.dereverbLevel * 100).toInt()) / 100f}", style = MaterialTheme.typography.bodySmall)
+                                Slider(
+                                    value = state.dereverbLevel,
+                                    onValueChange = { viewModel.setDereverbLevel(it) },
+                                    valueRange = 0.0f..1.0f
+                                )
+                            }
+                        }
+                        
+                        HorizontalDivider()
+
+                        // Amplification
+                        ListItem(
+                            headlineContent = { Text(strings.amplificationLabel) },
+                            supportingContent = {
+                                Column {
+                                    Text("${strings.amplificationMultiplierLabel}: ${((state.amplification * 10).toInt()) / 10f}x", style = MaterialTheme.typography.bodySmall)
+                                    Slider(
+                                        value = state.amplification,
+                                        onValueChange = { viewModel.setAmplification(it) },
+                                        valueRange = 0.0f..30.0f
+                                    )
+                                }
+                            }
+                        )
                     }
                 }
             }
@@ -492,47 +493,45 @@ fun SettingsContent(section: SettingsSection, viewModel: MainViewModel) {
                     )
                 }
                 
-                Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)) {
-                    Column {
-                        ListItem(
-                            headlineContent = { Text(strings.developerLabel) },
-                            supportingContent = { Text("LanRhyme") },
-                            leadingContent = { Icon(Icons.Default.Person, null) }
-                        )
-                        HorizontalDivider()
-                        ListItem(
-                            headlineContent = { Text(strings.githubRepoLabel) },
-                            supportingContent = { 
-                                Text(
-                                    "https://github.com/LanRhyme/MicYou",
-                                    color = MaterialTheme.colorScheme.primary,
-                                    textDecoration = TextDecoration.Underline,
-                                    modifier = Modifier.clickable { uriHandler.openUri("https://github.com/LanRhyme/MicYou") }
-                                ) 
-                            },
-                            leadingContent = { Icon(Icons.Default.Code, null) }
-                        )
-                        HorizontalDivider()
-                        ListItem(
-                            headlineContent = { Text(strings.contributorsLabel) },
-                            supportingContent = { Text(strings.contributorsDesc) },
-                            leadingContent = { Icon(Icons.Default.Group, null) },
-                            modifier = Modifier.clickable { uriHandler.openUri("https://github.com/LanRhyme/MicYou/graphs/contributors") }
-                        )
-                        HorizontalDivider()
-                        ListItem(
-                            headlineContent = { Text(strings.versionLabel) },
-                            supportingContent = { Text(getAppVersion()) },
-                            leadingContent = { Icon(Icons.Default.Info, null) }
-                        )
-                        HorizontalDivider()
-                        ListItem(
-                            headlineContent = { Text(strings.openSourceLicense) },
-                            supportingContent = { Text(strings.viewLibraries) },
-                            leadingContent = { Icon(Icons.Default.Description, null) },
-                            modifier = Modifier.clickable { showLicenseDialog = true }
-                        )
-                    }
+                Column {
+                    ListItem(
+                        headlineContent = { Text(strings.developerLabel) },
+                        supportingContent = { Text("LanRhyme") },
+                        leadingContent = { Icon(Icons.Default.Person, null) }
+                    )
+                    HorizontalDivider()
+                    ListItem(
+                        headlineContent = { Text(strings.githubRepoLabel) },
+                        supportingContent = { 
+                            Text(
+                                "https://github.com/LanRhyme/MicYou",
+                                color = MaterialTheme.colorScheme.primary,
+                                textDecoration = TextDecoration.Underline,
+                                modifier = Modifier.clickable { uriHandler.openUri("https://github.com/LanRhyme/MicYou") }
+                            ) 
+                        },
+                        leadingContent = { Icon(Icons.Default.Code, null) }
+                    )
+                    HorizontalDivider()
+                    ListItem(
+                        headlineContent = { Text(strings.contributorsLabel) },
+                        supportingContent = { Text(strings.contributorsDesc) },
+                        leadingContent = { Icon(Icons.Default.Group, null) },
+                        modifier = Modifier.clickable { uriHandler.openUri("https://github.com/LanRhyme/MicYou/graphs/contributors") }
+                    )
+                    HorizontalDivider()
+                    ListItem(
+                        headlineContent = { Text(strings.versionLabel) },
+                        supportingContent = { Text(getAppVersion()) },
+                        leadingContent = { Icon(Icons.Default.Info, null) }
+                    )
+                    HorizontalDivider()
+                    ListItem(
+                        headlineContent = { Text(strings.openSourceLicense) },
+                        supportingContent = { Text(strings.viewLibraries) },
+                        leadingContent = { Icon(Icons.Default.Description, null) },
+                        modifier = Modifier.clickable { showLicenseDialog = true }
+                    )
                 }
                 
                 Spacer(modifier = Modifier.height(16.dp))
