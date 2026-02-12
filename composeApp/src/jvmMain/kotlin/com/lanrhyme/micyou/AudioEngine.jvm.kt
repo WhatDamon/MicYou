@@ -173,44 +173,59 @@ actual class AudioEngine actual constructor() {
                 CoroutineScope(Dispatchers.IO).launch {
                     try {
                         if (mode == ConnectionMode.Bluetooth) {
-                            try {
-                                val localDevice = LocalDevice.getLocalDevice()
-                                localDevice.discoverable = DiscoveryAgent.GIAC
-                                println("本机蓝牙名称: ${localDevice.friendlyName}, 地址: ${localDevice.bluetoothAddress}")
-                                
-                                val uuid = javax.bluetooth.UUID("0000110100001000800000805F9B34FB", false)
-                                val url = "btspp://localhost:$uuid;name=MicYouServer"
-                                
-                                btNotifier = Connector.open(url) as StreamConnectionNotifier
-                                println("蓝牙服务已启动: $url")
-                                
-                                while (isActive) {
-                                    val connection = btNotifier?.acceptAndOpen() ?: break
-                                    activeBtConnection = connection
-                                    println("接受来自蓝牙的连接")
-                                    _state.value = StreamState.Streaming
-                                    _lastError.value = null
+                            while (isActive) {
+                                try {
+                                    val localDevice = LocalDevice.getLocalDevice()
+                                    localDevice.discoverable = DiscoveryAgent.GIAC
+                                    println("本机蓝牙名称: ${localDevice.friendlyName}, 地址: ${localDevice.bluetoothAddress}")
                                     
-                                    try {
-                                        val input = connection.openInputStream().toByteReadChannel()
-                                        val output = connection.openOutputStream().toByteWriteChannel()
-                                        handleConnection(input, output)
-                                    } catch (e: Exception) {
-                                        if (!isNormalDisconnect(e)) {
-                                            e.printStackTrace()
-                                            _lastError.value = "蓝牙连接错误: ${e.message}"
+                                    val uuid = javax.bluetooth.UUID("0000110100001000800000805F9B34FB", false)
+                                    val url = "btspp://localhost:$uuid;name=MicYouServer"
+                                    
+                                    btNotifier = Connector.open(url) as StreamConnectionNotifier
+                                    println("蓝牙服务已启动: $url")
+                                    
+                                    while (isActive) {
+                                        val connection = btNotifier?.acceptAndOpen() ?: break
+                                        activeBtConnection = connection
+                                        println("接受来自蓝牙的连接")
+                                        _state.value = StreamState.Streaming
+                                        _lastError.value = null
+                                        
+                                        try {
+                                            val input = connection.openInputStream().toByteReadChannel()
+                                            val output = connection.openOutputStream().toByteWriteChannel()
+                                            handleConnection(input, output)
+                                        } catch (e: Exception) {
+                                            if (!isNormalDisconnect(e)) {
+                                                e.printStackTrace()
+                                                _lastError.value = "蓝牙连接错误: ${e.message}"
+                                            }
+                                        } finally {
+                                            activeBtConnection = null
+                                            try {
+                                                connection.close()
+                                            } catch (e: Exception) {}
+                                            _state.value = StreamState.Connecting
                                         }
-                                    } finally {
-                                        activeBtConnection = null
-                                        connection.close()
-                                        _state.value = StreamState.Connecting
                                     }
-                                }
-                            } catch (e: Exception) { // Bluetooth specific errors
-                                if (isActive) {
-                                    e.printStackTrace()
-                                    _state.value = StreamState.Error
-                                    _lastError.value = "蓝牙初始化失败: ${e.message}. 请确保电脑支持蓝牙且已开启。"
+                                } catch (e: Exception) { // Bluetooth specific errors
+                                    if (isActive) {
+                                        e.printStackTrace()
+                                        // Only show error if we really failed to init or loop crashed repeatedly
+                                        if (_state.value != StreamState.Connecting) {
+                                             _state.value = StreamState.Error
+                                             _lastError.value = "蓝牙服务错误: ${e.message}. 正在尝试重启服务..."
+                                        }
+                                        
+                                        // Cleanup before retry
+                                        try {
+                                            btNotifier?.close()
+                                        } catch (ex: Exception) {}
+                                        btNotifier = null
+                                        
+                                        delay(3000) // Wait before retrying
+                                    }
                                 }
                             }
                         } else {

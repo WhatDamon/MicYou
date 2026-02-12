@@ -63,7 +63,8 @@ data class AppUiState(
     val isMuted: Boolean = false,
     val language: AppLanguage = AppLanguage.System,
     val useDynamicColor: Boolean = false,
-    val bluetoothAddress: String = ""
+    val bluetoothAddress: String = "",
+    val isAutoConfig: Boolean = true
 )
 
 class MainViewModel : ViewModel() {
@@ -124,6 +125,7 @@ class MainViewModel : ViewModel() {
 
         val savedUseDynamicColor = settings.getBoolean("use_dynamic_color", false)
         val savedBluetoothAddress = settings.getString("bluetooth_address", "")
+        val savedIsAutoConfig = settings.getBoolean("is_auto_config", true)
 
         _uiState.update { 
             it.copy(
@@ -149,8 +151,14 @@ class MainViewModel : ViewModel() {
                 enableStreamingNotification = savedEnableStreamingNotification,
                 language = savedLanguage,
                 useDynamicColor = savedUseDynamicColor,
-                bluetoothAddress = savedBluetoothAddress
+                bluetoothAddress = savedBluetoothAddress,
+                isAutoConfig = savedIsAutoConfig
             ) 
+        }
+        
+        // Apply auto config on startup if enabled
+        if (savedIsAutoConfig) {
+            applyAutoConfig(savedMode)
         }
         
         audioEngine.setMonitoring(savedMonitoring)
@@ -207,6 +215,28 @@ class MainViewModel : ViewModel() {
         _uiState.update { it.copy(audioConfigRevision = it.audioConfigRevision + 1) }
     }
 
+    private fun applyAutoConfig(mode: ConnectionMode) {
+        if (mode == ConnectionMode.Bluetooth) {
+            // Low bandwidth optimization
+            setSampleRate(SampleRate.Rate16000)
+            setChannelCount(ChannelCount.Mono)
+            setAudioFormat(AudioFormat.PCM_16BIT)
+        } else {
+            // High quality for WiFi/USB
+            setSampleRate(SampleRate.Rate48000)
+            setChannelCount(ChannelCount.Stereo)
+            setAudioFormat(AudioFormat.PCM_16BIT)
+        }
+    }
+
+    fun setIsAutoConfig(enabled: Boolean) {
+        _uiState.update { it.copy(isAutoConfig = enabled) }
+        settings.putBoolean("is_auto_config", enabled)
+        if (enabled) {
+            applyAutoConfig(_uiState.value.mode)
+        }
+    }
+
     fun toggleStream() {
         if (_uiState.value.streamState == StreamState.Streaming || _uiState.value.streamState == StreamState.Connecting) {
             stopStream()
@@ -252,6 +282,18 @@ class MainViewModel : ViewModel() {
             if (parsed == null || parsed <= 0) "6000" else current.port
         } else {
             current.port
+        }
+        
+        // Auto-configure for Bluetooth to optimize bandwidth and stability
+        if (current.isAutoConfig) {
+             applyAutoConfig(mode)
+        } else if (mode == ConnectionMode.Bluetooth) {
+            // Even if manual, we should suggest safe defaults or just leave it if user insists.
+            // But previous logic forced it. Let's keep previous logic as fallback if auto config is somehow bypassed
+            // or just rely on applyAutoConfig if we want strict control.
+            // Wait, if isAutoConfig is FALSE, we should NOT change settings automatically.
+            // So we remove the previous forced block and rely on applyAutoConfig being called if true.
+            // If false, we do nothing.
         }
 
         _uiState.update { it.copy(mode = mode, port = updatedPort) }

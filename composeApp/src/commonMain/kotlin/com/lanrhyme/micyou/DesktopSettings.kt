@@ -272,49 +272,77 @@ fun SettingsContent(section: SettingsSection, viewModel: MainViewModel) {
                     // Android 音频参数
                     Column {
                         ListItem(
-                            headlineContent = { Text(strings.sampleRateLabel) },
+                            headlineContent = { Text(strings.autoConfigLabel) },
+                            supportingContent = { Text(strings.autoConfigDesc) },
                             trailingContent = {
-                                 var expanded by remember { mutableStateOf(false) }
-                                 Box {
-                                     TextButton(onClick = { expanded = true }) { Text("${state.sampleRate.value} Hz") }
-                                     DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-                                         SampleRate.entries.forEach { rate ->
-                                             DropdownMenuItem(text = { Text("${rate.value} Hz") }, onClick = { viewModel.setSampleRate(rate); expanded = false })
-                                         }
-                                     }
-                                 }
-                            }
+                                Switch(
+                                    checked = state.isAutoConfig,
+                                    onCheckedChange = { viewModel.setIsAutoConfig(it) }
+                                )
+                            },
+                            modifier = Modifier.clickable { viewModel.setIsAutoConfig(!state.isAutoConfig) }
                         )
                         HorizontalDivider()
-                        ListItem(
-                            headlineContent = { Text(strings.channelCountLabel) },
-                            trailingContent = {
-                                 var expanded by remember { mutableStateOf(false) }
-                                 Box {
-                                     TextButton(onClick = { expanded = true }) { Text(state.channelCount.label) }
-                                     DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-                                         ChannelCount.entries.forEach { count ->
-                                             DropdownMenuItem(text = { Text(count.label) }, onClick = { viewModel.setChannelCount(count); expanded = false })
+                        
+                        // Manual settings (disabled if auto config is on)
+                        val manualSettingsAlpha = if (state.isAutoConfig) 0.5f else 1f
+                        val manualSettingsEnabled = !state.isAutoConfig
+                        
+                        Column(modifier = Modifier.alpha(manualSettingsAlpha)) {
+                            ListItem(
+                                headlineContent = { Text(strings.sampleRateLabel) },
+                                trailingContent = {
+                                     var expanded by remember { mutableStateOf(false) }
+                                     Box {
+                                         TextButton(
+                                             onClick = { expanded = true },
+                                             enabled = manualSettingsEnabled
+                                         ) { Text("${state.sampleRate.value} Hz") }
+                                         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+                                             SampleRate.entries.forEach { rate ->
+                                                 DropdownMenuItem(text = { Text("${rate.value} Hz") }, onClick = { viewModel.setSampleRate(rate); expanded = false })
+                                             }
                                          }
                                      }
-                                 }
-                            }
-                        )
-                        HorizontalDivider()
-                        ListItem(
-                            headlineContent = { Text(strings.audioFormatLabel) },
-                            trailingContent = {
-                                 var expanded by remember { mutableStateOf(false) }
-                                 Box {
-                                     TextButton(onClick = { expanded = true }) { Text(state.audioFormat.label) }
-                                     DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-                                         AudioFormat.entries.forEach { format ->
-                                             DropdownMenuItem(text = { Text(format.label) }, onClick = { viewModel.setAudioFormat(format); expanded = false })
+                                }
+                            )
+                            HorizontalDivider()
+                            ListItem(
+                                headlineContent = { Text(strings.channelCountLabel) },
+                                trailingContent = {
+                                     var expanded by remember { mutableStateOf(false) }
+                                     Box {
+                                         TextButton(
+                                             onClick = { expanded = true },
+                                             enabled = manualSettingsEnabled
+                                         ) { Text(state.channelCount.label) }
+                                         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+                                             ChannelCount.entries.forEach { count ->
+                                                 DropdownMenuItem(text = { Text(count.label) }, onClick = { viewModel.setChannelCount(count); expanded = false })
+                                             }
                                          }
                                      }
-                                 }
-                            }
-                        )
+                                }
+                            )
+                            HorizontalDivider()
+                            ListItem(
+                                headlineContent = { Text(strings.audioFormatLabel) },
+                                trailingContent = {
+                                     var expanded by remember { mutableStateOf(false) }
+                                     Box {
+                                         TextButton(
+                                             onClick = { expanded = true },
+                                             enabled = manualSettingsEnabled
+                                         ) { Text(state.audioFormat.label) }
+                                         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+                                             AudioFormat.entries.forEach { format ->
+                                                 DropdownMenuItem(text = { Text(format.label) }, onClick = { viewModel.setAudioFormat(format); expanded = false })
+                                             }
+                                         }
+                                     }
+                                }
+                            )
+                        }
                         HorizontalDivider()
                         // Android System Audio Processing (Combined NS + AGC)
                         ListItem(

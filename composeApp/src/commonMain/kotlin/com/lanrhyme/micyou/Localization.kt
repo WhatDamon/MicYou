@@ -85,7 +85,9 @@ data class AppStrings(
     val androidAudioProcessingLabel: String,
     val androidAudioProcessingDesc: String,
     val contributorsLabel: String,
-    val contributorsDesc: String
+    val contributorsDesc: String,
+    val autoConfigLabel: String,
+    val autoConfigDesc: String
 )
 
 val EnStrings = AppStrings(
@@ -161,7 +163,9 @@ val EnStrings = AppStrings(
     androidAudioProcessingLabel = "Built-in Audio Processing",
     androidAudioProcessingDesc = "Use hardware audio processing. May affect output quality.",
     contributorsLabel = "Contributors",
-    contributorsDesc = "Thanks to everyone who contributed to this project."
+    contributorsDesc = "Thanks to everyone who contributed to this project.",
+    autoConfigLabel = "Auto Configure Audio",
+    autoConfigDesc = "Automatically select optimal audio settings based on connection mode"
 )
 
 val ZhStrings = AppStrings(
@@ -237,7 +241,9 @@ val ZhStrings = AppStrings(
     androidAudioProcessingLabel = "手机硬件内置音频处理",
     androidAudioProcessingDesc = "开启后可能会影响输出的最终效果",
     contributorsLabel = "贡献者",
-    contributorsDesc = "感谢大家对本项目作出的贡献！"
+    contributorsDesc = "感谢每一位为本项目做出贡献的人",
+    autoConfigLabel = "自动配置音频",
+    autoConfigDesc = "根据连接模式自动选择最佳音频设置"
 )
 
 val LocalAppStrings = staticCompositionLocalOf { ZhStrings }
