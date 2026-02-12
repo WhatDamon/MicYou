@@ -5,6 +5,8 @@ import android.content.pm.PackageManager
 import android.media.AudioFormat
 import android.media.AudioRecord
 import android.media.MediaRecorder
+import android.media.audiofx.NoiseSuppressor
+import android.media.audiofx.AutomaticGainControl
 import androidx.core.app.ActivityCompat
 import io.ktor.network.selector.*
 import io.ktor.network.sockets.*
@@ -72,6 +74,14 @@ actual class AudioEngine actual constructor() {
 
     @Volatile
     private var enableStreamingNotification: Boolean = true
+
+    @Volatile
+    private var enableNS: Boolean = false
+    @Volatile
+    private var enableAGC: Boolean = false
+
+    private var noiseSuppressor: NoiseSuppressor? = null
+    private var automaticGainControl: AutomaticGainControl? = null
     
     private val CHECK_1 = "MicYouCheck1"
     private val CHECK_2 = "MicYouCheck2"
@@ -122,24 +132,31 @@ actual class AudioEngine actual constructor() {
                         val minBufSize = AudioRecord.getMinBufferSize(androidSampleRate, androidChannelConfig, androidAudioFormat)
 
                         try {
+                            val useProcessing = enableNS || enableAGC
+                            // 如果启用了处理，优先使用 MIC，因为 UNPROCESSED 可能会绕过系统效果
+                            val preferredSource = if (useProcessing) MediaRecorder.AudioSource.MIC else MediaRecorder.AudioSource.UNPROCESSED
+
                             recorder = try {
-                                // 尝试使用 UNPROCESSED
                                 AudioRecord(
-                                    MediaRecorder.AudioSource.UNPROCESSED,
+                                    preferredSource,
                                     androidSampleRate,
                                     androidChannelConfig,
                                     androidAudioFormat,
                                     minBufSize * 2
                                 )
                             } catch (e: Exception) {
-                                println("UNPROCESSED source failed, falling back to MIC: ${e.message}")
-                                AudioRecord(
-                                    MediaRecorder.AudioSource.MIC,
-                                    androidSampleRate,
-                                    androidChannelConfig,
-                                    androidAudioFormat,
-                                    minBufSize * 2
-                                )
+                                println("Preferred source $preferredSource failed, falling back to MIC: ${e.message}")
+                                if (preferredSource != MediaRecorder.AudioSource.MIC) {
+                                    AudioRecord(
+                                        MediaRecorder.AudioSource.MIC,
+                                        androidSampleRate,
+                                        androidChannelConfig,
+                                        androidAudioFormat,
+                                        minBufSize * 2
+                                    )
+                                } else {
+                                    throw e
+                                }
                             }
                         } catch (e: SecurityException) {
                             e.printStackTrace()
@@ -154,6 +171,25 @@ actual class AudioEngine actual constructor() {
                             _state.value = StreamState.Error
                             _lastError.value = msg
                             return@launch
+                        }
+
+                        // 初始化音频效果
+                        try {
+                            if (NoiseSuppressor.isAvailable()) {
+                                noiseSuppressor = NoiseSuppressor.create(recorder.audioSessionId)
+                                noiseSuppressor?.enabled = enableNS
+                            } else {
+                                println("NoiseSuppressor not available")
+                            }
+                            
+                            if (AutomaticGainControl.isAvailable()) {
+                                automaticGainControl = AutomaticGainControl.create(recorder.audioSessionId)
+                                automaticGainControl?.enabled = enableAGC
+                            } else {
+                                println("AutomaticGainControl not available")
+                            }
+                        } catch (e: Exception) {
+                             println("Failed to initialize audio effects: ${e.message}")
                         }
                         
                         // 网络设置
@@ -345,6 +381,11 @@ actual class AudioEngine actual constructor() {
                         }
                     } finally {
                         try {
+                            noiseSuppressor?.release()
+                            automaticGainControl?.release()
+                            noiseSuppressor = null
+                            automaticGainControl = null
+                            
                             sendChannel?.close()
                             recorder?.stop()
                             recorder?.release()
@@ -417,7 +458,15 @@ actual class AudioEngine actual constructor() {
         dereverbLevel: Float,
         amplification: Float
     ) {
-        // Android 端无需处理，功能仅存在于桌面端
+        this.enableNS = enableNS
+        this.enableAGC = enableAGC
+        
+        try {
+            noiseSuppressor?.enabled = enableNS
+            automaticGainControl?.enabled = enableAGC
+        } catch (e: Exception) {
+            println("Error updating audio effects: ${e.message}")
+        }
     }
 
     actual fun setStreamingNotificationEnabled(enabled: Boolean) {

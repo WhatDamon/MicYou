@@ -308,6 +308,13 @@ class MainViewModel : ViewModel() {
     
     // --- Audio Processing Setters ---
 
+    fun setAndroidAudioProcessing(enabled: Boolean) {
+        _uiState.update { it.copy(enableNS = enabled, enableAGC = enabled) }
+        settings.putBoolean("enable_ns", enabled)
+        settings.putBoolean("enable_agc", enabled)
+        updateAudioEngineConfig()
+    }
+
     fun setEnableNS(enabled: Boolean) {
         _uiState.update { it.copy(enableNS = enabled) }
         settings.putBoolean("enable_ns", enabled)

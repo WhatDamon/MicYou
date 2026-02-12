@@ -81,7 +81,9 @@ data class AppStrings(
     val developerLabel: String,
     val githubRepoLabel: String,
     val versionLabel: String,
-    val useDynamicColorLabel: String
+    val useDynamicColorLabel: String,
+    val androidAudioProcessingLabel: String,
+    val androidAudioProcessingDesc: String
 )
 
 val EnStrings = AppStrings(
@@ -153,7 +155,9 @@ val EnStrings = AppStrings(
     developerLabel = "Developer",
     githubRepoLabel = "GitHub Repository",
     versionLabel = "Version",
-    useDynamicColorLabel = "Use System Dynamic Color"
+    useDynamicColorLabel = "Use System Dynamic Color",
+    androidAudioProcessingLabel = "Built-in Audio Processing",
+    androidAudioProcessingDesc = "Use hardware audio processing. May affect output quality."
 )
 
 val ZhStrings = AppStrings(
@@ -225,7 +229,9 @@ val ZhStrings = AppStrings(
     developerLabel = "开发者",
     githubRepoLabel = "Github 仓库",
     versionLabel = "版本",
-    useDynamicColorLabel = "使用系统动态颜色(莫奈取色)"
+    useDynamicColorLabel = "使用系统动态颜色(莫奈取色)",
+    androidAudioProcessingLabel = "手机硬件内置音频处理",
+    androidAudioProcessingDesc = "开启后可能会影响输出的最终效果"
 )
 
 val LocalAppStrings = staticCompositionLocalOf { ZhStrings }

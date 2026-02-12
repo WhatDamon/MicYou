@@ -316,6 +316,19 @@ fun SettingsContent(section: SettingsSection, viewModel: MainViewModel) {
                                      }
                                 }
                             )
+                            HorizontalDivider()
+                            // Android System Audio Processing (Combined NS + AGC)
+                            ListItem(
+                                headlineContent = { Text(strings.androidAudioProcessingLabel) },
+                                supportingContent = { Text(strings.androidAudioProcessingDesc) },
+                                trailingContent = {
+                                    Switch(
+                                        checked = state.enableNS || state.enableAGC,
+                                        onCheckedChange = { viewModel.setAndroidAudioProcessing(it) }
+                                    )
+                                },
+                                modifier = Modifier.clickable { viewModel.setAndroidAudioProcessing(!(state.enableNS || state.enableAGC)) }
+                            )
                         }
                      }
                 } else {
