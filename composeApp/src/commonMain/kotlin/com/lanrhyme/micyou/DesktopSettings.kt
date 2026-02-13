@@ -634,7 +634,12 @@ fun SettingsContent(section: SettingsSection, viewModel: MainViewModel) {
                     ListItem(
                         headlineContent = { Text(strings.versionLabel) },
                         supportingContent = { Text(getAppVersion()) },
-                        leadingContent = { Icon(Icons.Default.Info, null) }
+                        leadingContent = { Icon(Icons.Default.Info, null) },
+                        trailingContent = {
+                            TextButton(onClick = { viewModel.checkUpdateManual() }) {
+                                Text(strings.checkUpdate)
+                            }
+                        }
                     )
                     HorizontalDivider()
                     ListItem(

@@ -1,6 +1,8 @@
 package com.lanrhyme.micyou
 
 import android.os.Build
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
@@ -21,6 +23,15 @@ actual fun uninstallVBCable() {
 }
 
 actual fun getAppVersion(): String = BuildConfig.VERSION_NAME
+
+actual fun openUrl(url: String) {
+    ContextHelper.getContext()?.let { context ->
+        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url)).apply {
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+        context.startActivity(intent)
+    }
+}
 
 actual suspend fun isPortAllowed(port: Int, protocol: String): Boolean = true
 actual suspend fun addFirewallRule(port: Int, protocol: String): Result<Unit> = Result.success(Unit)

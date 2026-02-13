@@ -2,6 +2,9 @@ package com.lanrhyme.micyou
 
 import androidx.compose.runtime.*
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 
 @Composable
 fun App(
@@ -37,6 +40,9 @@ fun App(
     
     val strings = getStrings(language)
 
+    val uiState by finalViewModel.uiState.collectAsState()
+    val newVersionAvailable = uiState.newVersionAvailable
+
     CompositionLocalProvider(LocalAppStrings provides strings) {
         AppTheme(themeMode = themeMode, seedColor = seedColorObj, useDynamicColor = useDynamicColor) {
             if (platform.type == PlatformType.Android) {
@@ -49,6 +55,28 @@ fun App(
                     onExitApp = onExitApp,
                     onHideApp = onHideApp,
                     onOpenSettings = onOpenSettings
+                )
+            }
+
+            // Update Dialog
+            if (newVersionAvailable != null) {
+                AlertDialog(
+                    onDismissRequest = { finalViewModel.dismissUpdateDialog() },
+                    title = { Text(strings.updateTitle) },
+                    text = { Text(strings.updateMessage.replace("%s", newVersionAvailable.tagName)) },
+                    confirmButton = {
+                        TextButton(onClick = {
+                            openUrl(newVersionAvailable.htmlUrl)
+                            finalViewModel.dismissUpdateDialog()
+                        }) {
+                            Text(strings.updateNow)
+                        }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = { finalViewModel.dismissUpdateDialog() }) {
+                            Text(strings.updateLater)
+                        }
+                    }
                 )
             }
         }

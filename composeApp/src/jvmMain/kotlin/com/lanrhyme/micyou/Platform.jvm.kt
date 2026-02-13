@@ -78,6 +78,24 @@ actual fun getAppVersion(): String {
     return "dev"
 }
 
+actual fun openUrl(url: String) {
+    try {
+        val os = System.getProperty("os.name").lowercase()
+        val rt = Runtime.getRuntime()
+        if (os.contains("win")) {
+            rt.exec("rundll32 url.dll,FileProtocolHandler $url")
+        } else if (os.contains("mac")) {
+            rt.exec("open $url")
+        } else if (os.contains("nix") || os.contains("nux")) {
+            rt.exec("xdg-open $url")
+        } else {
+            java.awt.Desktop.getDesktop().browse(java.net.URI(url))
+        }
+    } catch (e: Exception) {
+        Logger.e("Platform", "Failed to open URL: $url", e)
+    }
+}
+
 actual suspend fun isPortAllowed(port: Int, protocol: String): Boolean = FirewallManager.isPortAllowed(port, protocol)
 actual suspend fun addFirewallRule(port: Int, protocol: String): Result<Unit> = FirewallManager.addFirewallRule(port, protocol)
 

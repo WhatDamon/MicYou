@@ -71,7 +71,8 @@ data class AppUiState(
     val minimizeToTray: Boolean = true,
     val closeAction: CloseAction = CloseAction.Prompt,
     val showCloseConfirmDialog: Boolean = false,
-    val rememberCloseAction: Boolean = false
+    val rememberCloseAction: Boolean = false,
+    val newVersionAvailable: GitHubRelease? = null
 )
 
 enum class CloseAction(val label: String) {
@@ -86,6 +87,7 @@ class MainViewModel : ViewModel() {
     val uiState: StateFlow<AppUiState> = _uiState.asStateFlow()
     val audioLevels = audioEngine.audioLevels
     private val settings = SettingsFactory.getSettings()
+    private val updateChecker = UpdateChecker()
 
     init {
         // Load settings
@@ -217,6 +219,30 @@ class MainViewModel : ViewModel() {
             }
             if (savedAutoStart) {
                 startStream()
+            }
+        }
+
+        viewModelScope.launch {
+            val release = updateChecker.checkUpdate()
+            if (release != null) {
+                _uiState.update { it.copy(newVersionAvailable = release) }
+            }
+        }
+    }
+
+    fun dismissUpdateDialog() {
+        _uiState.update { it.copy(newVersionAvailable = null) }
+    }
+
+    fun checkUpdateManual() {
+        viewModelScope.launch {
+            val strings = getStrings(_uiState.value.language)
+            _uiState.update { it.copy(snackbarMessage = strings.checkingUpdate) }
+            val release = updateChecker.checkUpdate()
+            if (release != null) {
+                _uiState.update { it.copy(newVersionAvailable = release) }
+            } else {
+                _uiState.update { it.copy(snackbarMessage = strings.isLatestVersion) }
             }
         }
     }

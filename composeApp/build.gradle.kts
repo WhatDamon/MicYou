@@ -60,6 +60,7 @@ kotlin {
         androidMain.dependencies {
             implementation(libs.compose.uiToolingPreview)
             implementation(libs.androidx.activity.compose)
+            implementation(libs.ktor.client.okhttp)
         }
         commonMain.dependencies {
             implementation(libs.compose.runtime)
@@ -71,6 +72,9 @@ kotlin {
             implementation(libs.androidx.lifecycle.viewmodelCompose)
             implementation(libs.androidx.lifecycle.runtimeCompose)
             implementation(libs.ktor.network)
+            implementation(libs.ktor.client.core)
+            implementation(libs.ktor.client.content.negotiation)
+            implementation(libs.ktor.serialization.kotlinx.json)
             implementation(libs.kotlinx.serialization.protobuf)
             implementation(libs.compose.material.icons.extended)
         }
@@ -81,6 +85,7 @@ kotlin {
             implementation(compose.desktop.currentOs)
             implementation(libs.kotlinx.coroutinesSwing)
             implementation(libs.kotlinx.serialization.protobuf)
+            implementation(libs.ktor.client.java)
             implementation("de.maxhenkel.rnnoise4j:rnnoise4j:2.1.2")
             implementation("io.ultreia:bluecove:2.1.1")
         }
@@ -143,7 +148,7 @@ dependencies {
 compose.desktop {
     application {
         mainClass = "com.lanrhyme.micyou.MainKt"
-        jvmArgs("-Dfile.encoding=UTF-8")
+        jvmArgs("-Dfile.encoding=UTF-8", "-Dapp.version=${project.property("project.version")}")
 
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Exe, TargetFormat.Deb, TargetFormat.Rpm)

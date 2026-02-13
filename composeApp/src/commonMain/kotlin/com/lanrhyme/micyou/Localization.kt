@@ -109,7 +109,16 @@ data class AppStrings(
     val closeActionLabel: String,
     val closeActionPrompt: String,
     val closeActionMinimize: String,
-    val closeActionExit: String
+    val closeActionExit: String,
+
+    // Update
+    val updateTitle: String,
+    val updateMessage: String,
+    val updateNow: String,
+    val updateLater: String,
+    val checkUpdate: String,
+    val isLatestVersion: String,
+    val checkingUpdate: String
 )
 
 val EnStrings = AppStrings(
@@ -209,7 +218,16 @@ val EnStrings = AppStrings(
     closeActionLabel = "Close Button Action",
     closeActionPrompt = "Ask every time",
     closeActionMinimize = "Minimize to Tray",
-    closeActionExit = "Exit Application"
+    closeActionExit = "Exit Application",
+
+    // Update
+    updateTitle = "New Version Available",
+    updateMessage = "A new version (%s) is available on GitHub. Would you like to update now?",
+    updateNow = "Update Now",
+    updateLater = "Later",
+    checkUpdate = "Check for Updates",
+    isLatestVersion = "Already the latest version",
+    checkingUpdate = "Checking for updates..."
 )
 
 val ZhStrings = AppStrings(
@@ -309,7 +327,16 @@ val ZhStrings = AppStrings(
     closeActionLabel = "关闭按钮操作",
     closeActionPrompt = "每次询问",
     closeActionMinimize = "最小化到托盘",
-    closeActionExit = "直接退出"
+    closeActionExit = "直接退出",
+
+    // Update
+    updateTitle = "发现新版本",
+    updateMessage = "GitHub 上有新版本 (%s) 可用。是否立即前往更新？",
+    updateNow = "立即更新",
+    updateLater = "稍后",
+    checkUpdate = "检查更新",
+    isLatestVersion = "当前已是最新版本",
+    checkingUpdate = "正在检查更新..."
 )
 
 val LocalAppStrings = staticCompositionLocalOf { ZhStrings }
