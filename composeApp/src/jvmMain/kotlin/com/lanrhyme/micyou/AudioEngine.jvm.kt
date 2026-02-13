@@ -15,6 +15,7 @@ import kotlinx.serialization.protobuf.*
 import kotlinx.serialization.*
 import java.net.BindException
 import java.io.IOException
+import java.io.EOFException
 import java.io.File
 import java.util.concurrent.TimeUnit
 import javax.sound.sampled.*
