@@ -67,8 +67,18 @@ data class AppUiState(
     val isAutoConfig: Boolean = true,
     val snackbarMessage: String? = null,
     val showFirewallDialog: Boolean = false,
-    val pendingFirewallPort: Int? = null
+    val pendingFirewallPort: Int? = null,
+    val minimizeToTray: Boolean = true,
+    val closeAction: CloseAction = CloseAction.Prompt,
+    val showCloseConfirmDialog: Boolean = false,
+    val rememberCloseAction: Boolean = false
 )
+
+enum class CloseAction(val label: String) {
+    Prompt("prompt"),
+    Minimize("minimize"),
+    Exit("exit")
+}
 
 class MainViewModel : ViewModel() {
     private val audioEngine = AudioEngine()
@@ -129,6 +139,13 @@ class MainViewModel : ViewModel() {
         val savedUseDynamicColor = settings.getBoolean("use_dynamic_color", false)
         val savedBluetoothAddress = settings.getString("bluetooth_address", "")
         val savedIsAutoConfig = settings.getBoolean("is_auto_config", true)
+        val savedMinimizeToTray = settings.getBoolean("minimize_to_tray", true)
+        val savedCloseActionName = settings.getString("close_action", CloseAction.Prompt.name)
+        val savedCloseAction = try {
+            CloseAction.valueOf(savedCloseActionName)
+        } catch (e: Exception) {
+            CloseAction.Prompt
+        }
 
         _uiState.update { 
             it.copy(
@@ -155,7 +172,9 @@ class MainViewModel : ViewModel() {
                 language = savedLanguage,
                 useDynamicColor = savedUseDynamicColor,
                 bluetoothAddress = savedBluetoothAddress,
-                isAutoConfig = savedIsAutoConfig
+                isAutoConfig = savedIsAutoConfig,
+                minimizeToTray = savedMinimizeToTray,
+                closeAction = savedCloseAction
             ) 
         }
         
@@ -232,11 +251,53 @@ class MainViewModel : ViewModel() {
         }
     }
 
-    fun setIsAutoConfig(enabled: Boolean) {
+    fun setAutoConfig(enabled: Boolean) {
         _uiState.update { it.copy(isAutoConfig = enabled) }
         settings.putBoolean("is_auto_config", enabled)
         if (enabled) {
             applyAutoConfig(_uiState.value.mode)
+        }
+    }
+
+    fun setMinimizeToTray(enabled: Boolean) {
+        _uiState.update { it.copy(minimizeToTray = enabled) }
+        settings.putBoolean("minimize_to_tray", enabled)
+    }
+
+    fun setCloseAction(action: CloseAction) {
+        _uiState.update { it.copy(closeAction = action) }
+        settings.putString("close_action", action.name)
+    }
+
+    fun setShowCloseConfirmDialog(show: Boolean) {
+        _uiState.update { it.copy(showCloseConfirmDialog = show) }
+    }
+
+    fun setRememberCloseAction(remember: Boolean) {
+        _uiState.update { it.copy(rememberCloseAction = remember) }
+    }
+
+    fun handleCloseRequest(onExit: () -> Unit, onHide: () -> Unit) {
+        val state = _uiState.value
+        when (state.closeAction) {
+            CloseAction.Prompt -> {
+                _uiState.update { it.copy(showCloseConfirmDialog = true) }
+            }
+            CloseAction.Minimize -> onHide()
+            CloseAction.Exit -> onExit()
+        }
+    }
+
+    fun confirmCloseAction(action: CloseAction, remember: Boolean, onExit: () -> Unit, onHide: () -> Unit) {
+        if (remember) {
+            setCloseAction(action)
+        }
+        _uiState.update { it.copy(showCloseConfirmDialog = false) }
+        // 关键：延迟或在状态更新后执行回调，确保 UI 线程安全
+        if (action == CloseAction.Minimize) {
+            onHide()
+        } else {
+            onExit()
         }
     }
 

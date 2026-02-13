@@ -36,8 +36,6 @@ import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.automirrored.filled.VolumeOff
-import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.ui.draw.rotate
 import androidx.compose.foundation.clickable
@@ -48,6 +46,8 @@ fun DesktopHome(
     viewModel: MainViewModel,
     onMinimize: () -> Unit,
     onClose: () -> Unit,
+    onExitApp: () -> Unit,
+    onHideApp: () -> Unit,
     onOpenSettings: () -> Unit
 ) {
     val state by viewModel.uiState.collectAsState()
@@ -101,6 +101,48 @@ fun DesktopHome(
             dismissButton = {
                 TextButton(onClick = { viewModel.dismissFirewallDialog() }) {
                     Text(strings.firewallDismiss)
+                }
+            }
+        )
+    }
+
+    if (state.showCloseConfirmDialog) {
+        AlertDialog(
+            onDismissRequest = { viewModel.setShowCloseConfirmDialog(false) },
+            title = { Text(strings.closeConfirmTitle) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text(strings.closeConfirmMessage)
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null
+                        ) { 
+                            viewModel.setRememberCloseAction(!state.rememberCloseAction) 
+                        }
+                    ) {
+                        Checkbox(
+                            checked = state.rememberCloseAction,
+                            onCheckedChange = { viewModel.setRememberCloseAction(it) },
+                            interactionSource = remember { MutableInteractionSource() }
+                        )
+                        Text(strings.closeConfirmRemember, style = MaterialTheme.typography.bodyMedium)
+                    }
+                }
+            },
+            confirmButton = {
+                Button(onClick = {
+                    viewModel.confirmCloseAction(CloseAction.Minimize, state.rememberCloseAction, onExit = onExitApp, onHide = onHideApp)
+                }) {
+                    Text(strings.closeConfirmMinimize)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = {
+                    viewModel.confirmCloseAction(CloseAction.Exit, state.rememberCloseAction, onExit = onExitApp, onHide = onHideApp)
+                }) {
+                    Text(strings.closeConfirmExit)
                 }
             }
         )

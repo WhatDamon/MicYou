@@ -96,7 +96,20 @@ data class AppStrings(
     val firewallTitle: String,
     val firewallMessage: String,
     val firewallConfirm: String,
-    val firewallDismiss: String
+    val firewallDismiss: String,
+    val trayShow: String,
+    val trayHide: String,
+    val trayExit: String,
+    val minimizeToTrayLabel: String,
+    val closeConfirmTitle: String,
+    val closeConfirmMessage: String,
+    val closeConfirmMinimize: String,
+    val closeConfirmExit: String,
+    val closeConfirmRemember: String,
+    val closeActionLabel: String,
+    val closeActionPrompt: String,
+    val closeActionMinimize: String,
+    val closeActionExit: String
 )
 
 val EnStrings = AppStrings(
@@ -183,7 +196,20 @@ val EnStrings = AppStrings(
     firewallTitle = "Firewall Check",
     firewallMessage = "Port %d is not allowed by Windows Firewall. This may prevent Android devices from connecting via Wi-Fi.\n\nWould you like to try adding a firewall rule for this port? (Requires Administrator privileges)",
     firewallConfirm = "Try Add Rule",
-    firewallDismiss = "Ignore"
+    firewallDismiss = "Ignore",
+    trayShow = "Show App",
+    trayHide = "Hide App",
+    trayExit = "Exit",
+    minimizeToTrayLabel = "Minimize to Tray on Close",
+    closeConfirmTitle = "Close Confirmation",
+    closeConfirmMessage = "What would you like to do when closing the application?",
+    closeConfirmMinimize = "Minimize to Tray",
+    closeConfirmExit = "Exit Application",
+    closeConfirmRemember = "Don't ask again",
+    closeActionLabel = "Close Button Action",
+    closeActionPrompt = "Ask every time",
+    closeActionMinimize = "Minimize to Tray",
+    closeActionExit = "Exit Application"
 )
 
 val ZhStrings = AppStrings(
@@ -270,7 +296,20 @@ val ZhStrings = AppStrings(
     firewallTitle = "防火墙检查",
     firewallMessage = "端口 %d 似乎未被 Windows 防火墙放行。这可能会导致 Android 设备无法通过 Wi-Fi 连接。\n\n是否尝试自动添加防火墙规则？（需要管理员权限）",
     firewallConfirm = "尝试添加",
-    firewallDismiss = "忽略"
+    firewallDismiss = "忽略",
+    trayShow = "显示应用",
+    trayHide = "隐藏应用",
+    trayExit = "退出",
+    minimizeToTrayLabel = "关闭时最小化到托盘",
+    closeConfirmTitle = "退出确认",
+    closeConfirmMessage = "关闭应用时，您想执行什么操作？",
+    closeConfirmMinimize = "最小化到托盘",
+    closeConfirmExit = "直接退出应用",
+    closeConfirmRemember = "不再提示",
+    closeActionLabel = "关闭按钮操作",
+    closeActionPrompt = "每次询问",
+    closeActionMinimize = "最小化到托盘",
+    closeActionExit = "直接退出"
 )
 
 val LocalAppStrings = staticCompositionLocalOf { ZhStrings }

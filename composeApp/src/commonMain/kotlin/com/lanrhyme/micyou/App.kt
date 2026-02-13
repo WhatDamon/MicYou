@@ -8,6 +8,8 @@ fun App(
     viewModel: MainViewModel? = null,
     onMinimize: () -> Unit = {},
     onClose: () -> Unit = {},
+    onExitApp: () -> Unit = {},
+    onHideApp: () -> Unit = {},
     onOpenSettings: () -> Unit = {}
 ) {
     val platform = remember { getPlatform() }
@@ -44,6 +46,8 @@ fun App(
                     viewModel = finalViewModel,
                     onMinimize = onMinimize,
                     onClose = onClose,
+                    onExitApp = onExitApp,
+                    onHideApp = onHideApp,
                     onOpenSettings = onOpenSettings
                 )
             }

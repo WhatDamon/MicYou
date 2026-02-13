@@ -143,6 +143,7 @@ dependencies {
 compose.desktop {
     application {
         mainClass = "com.lanrhyme.micyou.MainKt"
+        jvmArgs("-Dfile.encoding=UTF-8")
 
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Exe, TargetFormat.Deb)

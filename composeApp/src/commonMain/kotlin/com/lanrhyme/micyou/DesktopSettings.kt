@@ -213,6 +213,45 @@ fun SettingsContent(section: SettingsSection, viewModel: MainViewModel) {
                                 },
                                 modifier = Modifier.clickable { viewModel.setAutoStart(!state.autoStart) }
                             )
+                            HorizontalDivider()
+                            ListItem(
+                                headlineContent = { Text(strings.closeActionLabel) },
+                                trailingContent = {
+                                    var expanded by remember { mutableStateOf(false) }
+                                    Box {
+                                        TextButton(onClick = { expanded = true }) {
+                                            Text(when (state.closeAction) {
+                                                CloseAction.Prompt -> strings.closeActionPrompt
+                                                CloseAction.Minimize -> strings.closeActionMinimize
+                                                CloseAction.Exit -> strings.closeActionExit
+                                            })
+                                        }
+                                        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+                                            CloseAction.entries.forEach { action ->
+                                                DropdownMenuItem(
+                                                    text = {
+                                                        Text(when (action) {
+                                                            CloseAction.Prompt -> strings.closeActionPrompt
+                                                            CloseAction.Minimize -> strings.closeActionMinimize
+                                                            CloseAction.Exit -> strings.closeActionExit
+                                                        })
+                                                    },
+                                                    onClick = {
+                                                        viewModel.setCloseAction(action)
+                                                        expanded = false
+                                                    },
+                                                    trailingIcon = {
+                                                        if (state.closeAction == action) {
+                                                            Icon(Icons.Default.Check, contentDescription = null)
+                                                        }
+                                                    }
+                                                )
+                                            }
+                                        }
+                                    }
+                                },
+                                modifier = Modifier.clickable { /* Handled by dropdown */ }
+                            )
                         }
                     }
                 }
@@ -289,11 +328,11 @@ fun SettingsContent(section: SettingsSection, viewModel: MainViewModel) {
                             supportingContent = { Text(strings.autoConfigDesc) },
                             trailingContent = {
                                 Switch(
-                                    checked = state.isAutoConfig,
-                                    onCheckedChange = { viewModel.setIsAutoConfig(it) }
-                                )
-                            },
-                            modifier = Modifier.clickable { viewModel.setIsAutoConfig(!state.isAutoConfig) }
+                                        checked = state.isAutoConfig,
+                                        onCheckedChange = { viewModel.setAutoConfig(it) }
+                                    )
+                                },
+                                modifier = Modifier.clickable { viewModel.setAutoConfig(!state.isAutoConfig) }
                         )
                         HorizontalDivider()
                         
