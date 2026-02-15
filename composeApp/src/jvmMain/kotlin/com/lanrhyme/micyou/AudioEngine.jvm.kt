@@ -257,6 +257,7 @@ actual class AudioEngine actual constructor() {
                                 selectorManager = SelectorManager(Dispatchers.IO)
                                 serverSocket = aSocket(selectorManager!!).tcp().bind("0.0.0.0", port = port)
                                 Logger.i("AudioEngine", "Listening on port $port (0.0.0.0)")
+                                Logger.d("AudioEngine", "Server bound, waiting for connections...")
                                 
                                 while (isActive) {
                                     val socket = serverSocket?.accept() ?: break

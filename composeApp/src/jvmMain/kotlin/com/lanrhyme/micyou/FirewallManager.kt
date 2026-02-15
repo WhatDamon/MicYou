@@ -14,37 +14,25 @@ object FirewallManager {
             // 1. 首先检查是否有显式的阻止规则，因为阻止规则优先级更高
             val blockCheckCmd = "if (Get-NetFirewallRule -Enabled True -Direction Inbound -Action Block | Get-NetFirewallPortFilter | Where-Object { \$_.LocalPort -eq '$port' -and \$_.Protocol -eq '$protocol' }) { exit 0 } else { exit 1 }"
             val blockProcess = ProcessBuilder("powershell", "-NoProfile", "-Command", blockCheckCmd).start()
-            if (blockProcess.waitFor(5, TimeUnit.SECONDS) && blockProcess.exitValue() == 0) {
+            if (blockProcess.waitFor(2, TimeUnit.SECONDS) && blockProcess.exitValue() == 0) {
                 Logger.w("FirewallManager", "Found explicit BLOCK rule for port $port/$protocol")
                 return@withContext false
             }
 
             // 2. 检查是否有允许规则
-            // 这种方式比解析 netsh 输出更可靠，且支持检查特定端口
             val allowCheckCmd = "if (Get-NetFirewallRule -Enabled True -Direction Inbound -Action Allow | Get-NetFirewallPortFilter | Where-Object { \$_.LocalPort -eq '$port' -and \$_.Protocol -eq '$protocol' }) { exit 0 } else { exit 1 }"
             val allowProcess = ProcessBuilder("powershell", "-NoProfile", "-Command", allowCheckCmd).start()
 
-            val finished = allowProcess.waitFor(5, TimeUnit.SECONDS)
+            val finished = allowProcess.waitFor(2, TimeUnit.SECONDS)
             if (!finished) {
                 allowProcess.destroy()
                 Logger.w("FirewallManager", "Firewall allow check timed out, assuming allowed")
-                return@withContext true // 超时则保守认为已放行
+                return@withContext true
             }
             
             val isAllowed = allowProcess.exitValue() == 0
             if (!isAllowed) {
                 Logger.w("FirewallManager", "No explicit ALLOW rule found for port $port/$protocol")
-                
-                // 3. 检查当前网络配置（如果是公用网络，通常更严格）
-                val profileCmd = "Get-NetConnectionProfile | Select-Object -ExpandProperty NetworkCategory"
-                val profileProcess = ProcessBuilder("powershell", "-NoProfile", "-Command", profileCmd).start()
-                if (profileProcess.waitFor(2, TimeUnit.SECONDS) && profileProcess.exitValue() == 0) {
-                    val profile = profileProcess.inputStream.bufferedReader().readText().trim()
-                    Logger.i("FirewallManager", "Current network profile: $profile")
-                    if (profile == "Public") {
-                        Logger.w("FirewallManager", "User is on a PUBLIC network. Connection is likely blocked by default.")
-                    }
-                }
             } else {
                 Logger.i("FirewallManager", "Found ALLOW rule for port $port/$protocol")
             }
@@ -52,7 +40,6 @@ object FirewallManager {
             isAllowed
         } catch (e: Exception) {
             Logger.e("FirewallManager", "Failed to check firewall status", e)
-            // 如果检查失败（例如系统不支持 PowerShell 4.0+ 的网络命令），返回 true 避免干扰
             true
         }
     }

@@ -352,25 +352,30 @@ class MainViewModel : ViewModel() {
         val channelCount = _uiState.value.channelCount
         val audioFormat = _uiState.value.audioFormat
 
-        viewModelScope.launch {
-            // Windows 防火墙检查
-            if (!isClient && mode == ConnectionMode.Wifi) {
-                if (!isPortAllowed(port, "TCP")) {
-                    Logger.w("MainViewModel", "Port $port is not allowed by firewall")
-                    _uiState.update { it.copy(showFirewallDialog = true, pendingFirewallPort = port) }
-                    return@launch
-                }
-            }
+        _uiState.update { it.copy(streamState = StreamState.Connecting, errorMessage = null) }
 
+        // 启动音频引擎（不阻塞）
+        viewModelScope.launch {
             // Config is already updated via updateAudioEngineConfig, but we pass params to start just in case or for init
             updateAudioEngineConfig()
 
             try {
+                Logger.d("MainViewModel", "Calling audioEngine.start()")
                 audioEngine.start(ip, port, mode, isClient, sampleRate, channelCount, audioFormat)
                 Logger.i("MainViewModel", "Stream started successfully")
             } catch (e: Exception) {
                 Logger.e("MainViewModel", "Failed to start stream", e)
-                _uiState.update { it.copy(errorMessage = e.message) }
+                _uiState.update { it.copy(streamState = StreamState.Error, errorMessage = e.message) }
+            }
+        }
+
+        // 异步检查防火墙（不阻塞启动）
+        if (!isClient && mode == ConnectionMode.Wifi) {
+            viewModelScope.launch {
+                if (!isPortAllowed(port, "TCP")) {
+                    Logger.w("MainViewModel", "Port $port is not allowed by firewall")
+                    _uiState.update { it.copy(showFirewallDialog = true, pendingFirewallPort = port) }
+                }
             }
         }
     }
