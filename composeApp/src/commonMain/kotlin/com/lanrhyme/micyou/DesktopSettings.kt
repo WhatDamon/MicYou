@@ -21,8 +21,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 
@@ -429,20 +432,38 @@ fun SettingsContent(section: SettingsSection, viewModel: MainViewModel) {
                             modifier = Modifier.clickable { viewModel.setEnableNS(!state.enableNS) }
                         )
                         if (state.enableNS) {
+                            var showNsTypeHelp by remember { mutableStateOf(false) }
+
                             ListItem(
                                 headlineContent = { Text(strings.nsTypeLabel) },
                                 trailingContent = {
-                                     var expanded by remember { mutableStateOf(false) }
-                                     Box {
-                                         TextButton(onClick = { expanded = true }) { Text(state.nsType.name) }
-                                         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-                                             NoiseReductionType.entries.forEach { type ->
-                                                 DropdownMenuItem(text = { Text(type.name) }, onClick = { viewModel.setNsType(type); expanded = false })
-                                             }
-                                         }
-                                     }
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        // 帮助按钮
+                                        IconButton(onClick = { showNsTypeHelp = true }) {
+                                            Icon(
+                                                imageVector = Icons.Default.Info,
+                                                contentDescription = "降噪算法说明",
+                                            )
+                                        }
+
+                                        // 算法选择下拉菜单
+                                        var expanded by remember { mutableStateOf(false) }
+                                        Box {
+                                            TextButton(onClick = { expanded = true }) { Text(state.nsType.name) }
+                                            DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+                                                NoiseReductionType.entries.forEach { type ->
+                                                    DropdownMenuItem(text = { Text(type.name) }, onClick = { viewModel.setNsType(type); expanded = false })
+                                                }
+                                            }
+                                        }
+                                    }
                                 }
                             )
+
+                            // 降噪算法帮助 Popup
+                            if (showNsTypeHelp) {
+                                NoiseReductionHelpPopup(onDismiss = { showNsTypeHelp = false })
+                            }
                         }
                         
                         HorizontalDivider()
@@ -676,5 +697,132 @@ fun SettingsSection.getLabel(strings: AppStrings): String {
         SettingsSection.Appearance -> strings.appearanceSection
         SettingsSection.Audio -> strings.audioSection
         SettingsSection.About -> strings.aboutSection
+    }
+}
+
+/**
+ * 降噪算法帮助 Popup
+ */
+@Composable
+fun NoiseReductionHelpPopup(onDismiss: () -> Unit) {
+    val strings = LocalAppStrings.current
+
+    Dialog(onDismissRequest = onDismiss) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surface
+            )
+        ) {
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(20.dp)
+            ) {
+                // 标题
+                item {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            strings.nsAlgorithmHelpTitle,
+                            style = MaterialTheme.typography.titleLarge,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        IconButton(onClick = onDismiss) {
+                            Icon(
+                                imageVector = Icons.Default.Close,
+                                contentDescription = "Close",
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // RNNoise
+                    AlgorithmInfoItem(
+                        title = strings.nsAlgorithmRNNoiseTitle,
+                        description = strings.nsAlgorithmRNNoiseDesc,
+                        recommendation = strings.nsAlgorithmRecommended,
+                        isRecommended = true
+                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    // Ulunas (ONNX)
+                    AlgorithmInfoItem(
+                        title = strings.nsAlgorithmUlnasTitle,
+                        description = strings.nsAlgorithmUlnasDesc,
+                        recommendation = strings.nsAlgorithmAlternative,
+                        isRecommended = true
+                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    // Speexdsp
+                    AlgorithmInfoItem(
+                        title = strings.nsAlgorithmSpeexdspTitle,
+                        description = strings.nsAlgorithmSpeexdspDesc,
+                        recommendation = strings.nsAlgorithmLightweight,
+                        isRecommended = false
+                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    // 关闭按钮
+                    Button(
+                        onClick = onDismiss,
+                        modifier = Modifier.align(Alignment.End)
+                    ) {
+                        Text(strings.nsAlgorithmCloseButton)
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun AlgorithmInfoItem(
+    title: String,
+    description: String,
+    recommendation: String,
+    isRecommended: Boolean
+) {
+    Column {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                title,
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+                fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
+            )
+            if (recommendation.isNotEmpty()) {
+                Spacer(modifier = Modifier.width(8.dp))
+                Surface(
+                    color = if (isRecommended) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.secondaryContainer,
+                    shape = RoundedCornerShape(4.dp)
+                ) {
+                    Text(
+                        recommendation,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = if (isRecommended) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSecondaryContainer,
+                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                    )
+                }
+            }
+        }
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(
+            description,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
     }
 }
