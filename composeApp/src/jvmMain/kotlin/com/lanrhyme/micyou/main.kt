@@ -229,11 +229,13 @@ fun main() {
                     
                     trayIcon.addMouseListener(object : MouseAdapter() {
                         override fun mouseClicked(e: MouseEvent) {
-                            if (e.button == MouseEvent.BUTTON1) { // Left click
+                            if (e.button == MouseEvent.BUTTON1) {
                                 isVisible = !isVisible
-                            } else if (e.button == MouseEvent.BUTTON3) { // Right click
-                                val point = e.point
-                                trayMenuPosition = WindowPosition(point.x.dp, point.y.dp)
+                            } else if (e.button == MouseEvent.BUTTON3) {
+                                val screenX = e.xOnScreen
+                                val screenY = e.yOnScreen
+                                Logger.d("Tray", "Right click at screen position: ($screenX, $screenY)")
+                                trayMenuPosition = WindowPosition(screenX.dp, screenY.dp)
                                 isTrayMenuOpen = true
                             }
                         }
@@ -255,8 +257,12 @@ fun main() {
 
             // Custom Tray Menu Window for AWT implementation
             if (isTrayMenuOpen) {
+                Logger.d("Tray", "Opening tray menu window at: $trayMenuPosition")
                 Window(
-                    onCloseRequest = { isTrayMenuOpen = false },
+                    onCloseRequest = { 
+                        Logger.d("Tray", "Tray menu close requested")
+                        isTrayMenuOpen = false 
+                    },
                     visible = true,
                     title = "Tray Menu",
                     state = rememberWindowState(
@@ -265,16 +271,25 @@ fun main() {
                         height = 180.dp
                     ),
                     undecorated = true,
-                    transparent = true,
+                    transparent = false,
                     alwaysOnTop = true,
                     resizable = false,
                     focusable = true
                 ) {
                     DisposableEffect(Unit) {
+                        Logger.d("Tray", "Tray menu window DisposableEffect initialized")
                         val window = this@Window.window
+                        var hasGainedFocus = false
                         val focusListener = object : WindowAdapter() {
+                            override fun windowGainedFocus(e: WindowEvent?) {
+                                hasGainedFocus = true
+                                Logger.d("Tray", "Tray menu window gained focus")
+                            }
                             override fun windowLostFocus(e: WindowEvent?) {
-                                isTrayMenuOpen = false
+                                Logger.d("Tray", "Tray menu window lost focus, hasGainedFocus=$hasGainedFocus")
+                                if (hasGainedFocus) {
+                                    isTrayMenuOpen = false
+                                }
                             }
                         }
                         window.addWindowFocusListener(focusListener)
