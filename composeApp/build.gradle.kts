@@ -179,6 +179,10 @@ compose.desktop {
             linux {
         		iconFile.set(project.file("src/commonMain/composeResources/drawable/app_icon.png"))
     		}
+
+            macOS {
+                iconFile.set(project.file("src/commonMain/composeResources/drawable/mac_icon.icns"))
+            }
         }
     }
 }
