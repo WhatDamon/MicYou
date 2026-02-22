@@ -156,12 +156,12 @@ class AudioOutputManager {
     private fun openAndStartLine(audioFormat: AudioFormat): Boolean {
         return try {
             val bytesPerSecond = (currentSampleRate * currentChannelCount * 2).coerceAtLeast(1)
-            val bufferSizeBytes = (bytesPerSecond / 10).coerceIn(4096, 65536)
+            val bufferSizeBytes = (bytesPerSecond / 4).coerceIn(8192, 131072)
             
             outputLine?.open(audioFormat, bufferSizeBytes)
             outputLine?.start()
             
-            Logger.d("AudioOutputManager", "音频输出线路已启动 (缓冲区: ${bufferSizeBytes}字节)")
+            Logger.d("AudioOutputManager", "音频输出线路已启动 (缓冲区: ${bufferSizeBytes}字节, 约${bufferSizeBytes * 1000 / bytesPerSecond}ms)")
             true
         } catch (e: Exception) {
             Logger.e("AudioOutputManager", "打开音频输出线路失败", e)
