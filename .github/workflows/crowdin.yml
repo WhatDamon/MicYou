@@ -7,6 +7,12 @@ on:
     paths:
       - 'composeApp/src/commonMain/composeResources/files/i18n/strings_zh.json'
   workflow_dispatch:
+    inputs:
+      upload_translations:
+        description: 'Upload existing translations (use when re-initializing)'
+        required: false
+        default: 'false'
+        type: boolean
   schedule:
     - cron: '0 0 * * 0'
 
@@ -26,7 +32,7 @@ jobs:
         uses: crowdin/github-action@v2
         with:
           upload_sources: true
-          upload_translations: false
+          upload_translations: ${{ github.event.inputs.upload_translations == 'true' }}
           download_translations: true
           crowdin_branch_name: master
           localization_branch_name: l10n/crowdin
