@@ -21,7 +21,7 @@ class AudioOutputManager {
             release()
         }
         
-        Logger.d("AudioOutputManager", "初始化音频输出: 采样率=$sampleRate, 声道数=$channelCount")
+        Logger.d("AudioOutputManager", "Initialize audio output: Sample rate = \$sampleRate, Channel count = \$channelCount")
         
         currentSampleRate = sampleRate
         currentChannelCount = channelCount
@@ -50,23 +50,23 @@ class AudioOutputManager {
     }
     
     private fun initLinux(audioFormat: AudioFormat, lineInfo: DataLine.Info): Boolean {
-        Logger.d("AudioOutputManager", "Linux 平台: 尝试使用 PipeWire 虚拟设备")
+        Logger.d("AudioOutputManager", "Linux Platform: Try using PipeWire virtual devices")
         
         if (!VirtualAudioDevice.isAvailable()) {
-            Logger.w("AudioOutputManager", "PipeWire 不可用，回退到默认设备")
+            Logger.w("AudioOutputManager", "PipeWire is unavailable; falling back to the default device.")
             return false
         }
         
         if (!VirtualAudioDevice.isSetupComplete()) {
-            Logger.i("AudioOutputManager", "设置 PipeWire 虚拟音频设备...")
+            Logger.i("AudioOutputManager", "Set up PipeWire virtual audio devices...")
             if (!VirtualAudioDevice.setup()) {
-                Logger.e("AudioOutputManager", "设置虚拟音频设备失败")
+                Logger.e("AudioOutputManager", "Failed to set up virtual audio device")
                 return false
             }
         }
         
         val sinkName = VirtualAudioDevice.virtualSinkName
-        Logger.i("AudioOutputManager", "尝试连接到虚拟 Sink: $sinkName")
+        Logger.i("AudioOutputManager", "Attempt to connect to the virtual sink: \$sinkName")
         
         val mixers = AudioSystem.getMixerInfo()
         for (mixerInfo in mixers) {
@@ -77,16 +77,16 @@ class AudioOutputManager {
                     if (mixer.isLineSupported(lineInfo)) {
                         outputLine = mixer.getLine(lineInfo) as SourceDataLine
                         isUsingVirtualDevice = true
-                        Logger.i("AudioOutputManager", "使用虚拟设备: ${mixerInfo.name}")
+                        Logger.i("AudioOutputManager", "Using virtual device: \${mixerInfo.name}")
                         return openAndStartLine(audioFormat)
                     }
                 } catch (e: Exception) {
-                    Logger.d("AudioOutputManager", "混音器 ${mixerInfo.name} 不支持此格式")
+                    Logger.d("AudioOutputManager", "The mixer \${mixerInfo.name} does not support this format.")
                 }
             }
         }
         
-        Logger.w("AudioOutputManager", "未找到 PipeWire 虚拟设备混音器，使用 PulseAudio 方式")
+        Logger.w("AudioOutputManager", "PipeWire virtual device mixer not found; using PulseAudio method instead.")
         return initPulseAudio(audioFormat)
     }
     
@@ -101,22 +101,22 @@ class AudioOutputManager {
                 if (mixer.isLineSupported(DataLine.Info(SourceDataLine::class.java, audioFormat))) {
                     outputLine = mixer.getLine(DataLine.Info(SourceDataLine::class.java, audioFormat)) as SourceDataLine
                     isUsingVirtualDevice = true
-                    Logger.i("AudioOutputManager", "使用 PulseAudio 混音器")
+                    Logger.i("AudioOutputManager", "Using the PulseAudio mixer")
                     return openAndStartLine(audioFormat)
                 }
             }
         } catch (e: Exception) {
-            Logger.w("AudioOutputManager", "PulseAudio 方式失败: ${e.message}")
+            Logger.w("AudioOutputManager", "PulseAudio method failed: \${e.message}")
         }
         
         return false
     }
     
     private fun initMacOS(audioFormat: AudioFormat, lineInfo: DataLine.Info): Boolean {
-        Logger.d("AudioOutputManager", "macOS 平台: 尝试使用 BlackHole 虚拟设备")
+        Logger.d("AudioOutputManager", "macOS: Try using the BlackHole virtual device")
         
         if (!BlackHoleManager.isInstalled()) {
-            Logger.w("AudioOutputManager", "BlackHole 未安装，回退到默认设备")
+            Logger.w("AudioOutputManager", "BlackHole not installed, reverting to default device")
             return false
         }
         
@@ -125,14 +125,14 @@ class AudioOutputManager {
             try {
                 outputLine = blackHoleMixer.getLine(lineInfo) as SourceDataLine
                 isUsingVirtualDevice = true
-                Logger.i("AudioOutputManager", "使用 BlackHole 虚拟设备: ${blackHoleMixer.mixerInfo.name}")
+                Logger.i("AudioOutputManager", "Using the BlackHole virtual device: \${blackHoleMixer.mixerInfo.name}")
                 return openAndStartLine(audioFormat)
             } catch (e: Exception) {
-                Logger.e("AudioOutputManager", "初始化 BlackHole 失败", e)
+                Logger.e("AudioOutputManager", "Failed to initialize BlackHole", e)
             }
         }
         
-        Logger.w("AudioOutputManager", "未找到 BlackHole 混音器，回退到默认设备")
+        Logger.w("AudioOutputManager", "BlackHole mixer not found; reverting to default device.")
         return false
     }
     
@@ -145,11 +145,11 @@ class AudioOutputManager {
                 try {
                     val mixer = AudioSystem.getMixer(mixerInfo)
                     if (mixer.isLineSupported(lineInfo)) {
-                        Logger.d("AudioOutputManager", "找到 BlackHole 混音器: ${mixerInfo.name}")
+                        Logger.d("AudioOutputManager", "Found BlackHole mixer: \${mixerInfo.name}")
                         return mixer
                     }
                 } catch (e: Exception) {
-                    Logger.d("AudioOutputManager", "BlackHole 混音器检查失败: ${e.message}")
+                    Logger.d("AudioOutputManager", "BlackHole mixer Check Failed: \${e.message}")
                 }
             }
         }
@@ -158,7 +158,7 @@ class AudioOutputManager {
     }
     
     private fun initDefault(audioFormat: AudioFormat, lineInfo: DataLine.Info): Boolean {
-        Logger.d("AudioOutputManager", "尝试使用默认音频设备")
+        Logger.d("AudioOutputManager", "Try using the default audio device")
         
         if (PlatformInfo.isWindows) {
             val cableMixer = findVBCableMixer(lineInfo)
@@ -166,10 +166,10 @@ class AudioOutputManager {
                 try {
                     outputLine = cableMixer.getLine(lineInfo) as SourceDataLine
                     isUsingVirtualDevice = true
-                    Logger.i("AudioOutputManager", "使用 VB-CABLE Input")
+                    Logger.i("AudioOutputManager", "Using VB-CABLE Input")
                     return openAndStartLine(audioFormat)
                 } catch (e: Exception) {
-                    Logger.e("AudioOutputManager", "初始化 VB-CABLE 失败", e)
+                    Logger.e("AudioOutputManager", "Failed to initialize VB-CABLE", e)
                 }
             }
         }
@@ -177,10 +177,10 @@ class AudioOutputManager {
         return try {
             outputLine = AudioSystem.getLine(lineInfo) as SourceDataLine
             isUsingVirtualDevice = false
-            Logger.i("AudioOutputManager", "使用系统默认音频输出")
+            Logger.i("AudioOutputManager", "Use the system's default audio output")
             openAndStartLine(audioFormat)
         } catch (e: Exception) {
-            Logger.e("AudioOutputManager", "获取默认系统输出线路失败", e)
+            Logger.e("AudioOutputManager", "Failed to obtain the default system output device.", e)
             false
         }
     }
@@ -196,7 +196,7 @@ class AudioOutputManager {
                         return mixer
                     }
                 } catch (e: Exception) {
-                    Logger.d("AudioOutputManager", "VB-CABLE 混音器检查失败: ${e.message}")
+                    Logger.d("AudioOutputManager", "VB-CABLE mixer check failed: ${e.message}")
                 }
             }
         }
@@ -212,10 +212,10 @@ class AudioOutputManager {
             outputLine?.open(audioFormat, bufferSizeBytes)
             outputLine?.start()
             
-            Logger.d("AudioOutputManager", "音频输出线路已启动 (缓冲区: ${bufferSizeBytes}字节)")
+            Logger.d("AudioOutputManager", "Audio output line has been activated (Buffer: \${bufferSizeBytes} bytes)")
             true
         } catch (e: Exception) {
-            Logger.e("AudioOutputManager", "打开音频输出线路失败", e)
+            Logger.e("AudioOutputManager", "Failed to open audio output line", e)
             outputLine = null
             false
         }
@@ -231,7 +231,7 @@ class AudioOutputManager {
         try {
             outputLine?.write(buffer, offset, length)
         } catch (e: Exception) {
-            Logger.e("AudioOutputManager", "写入音频数据失败", e)
+            Logger.e("AudioOutputManager", "Failed to write audio data", e)
         }
     }
     
@@ -253,20 +253,20 @@ class AudioOutputManager {
     fun isUsingVirtualDevice(): Boolean = isUsingVirtualDevice
     
     fun release() {
-        Logger.d("AudioOutputManager", "释放音频输出资源")
+        Logger.d("AudioOutputManager", "Release audio output resources")
         
         try {
             outputLine?.drain()
             outputLine?.close()
         } catch (e: Exception) {
-            Logger.e("AudioOutputManager", "关闭音频输出线路时出错", e)
+            Logger.e("AudioOutputManager", "Error occurred while disabling the audio output line.", e)
         }
         
         outputLine = null
         isUsingVirtualDevice = false
         
         if (PlatformInfo.isLinux && VirtualAudioDevice.isSetupComplete()) {
-            Logger.i("AudioOutputManager", "清理 Linux 虚拟音频设备")
+            Logger.i("AudioOutputManager", "Cleaning Up Linux Virtual Audio Devices")
             VirtualAudioDevice.cleanup()
         }
     }
