@@ -18,7 +18,7 @@ object BlackHoleManager {
         return try {
             AudioSystem.getMixerInfo().any { BLACKHOLE_PATTERN.matches(it.name) }
         } catch (e: Exception) {
-            Logger.e("BlackHoleManager", "检测 BlackHole 设备时出错", e)
+            Logger.e("BlackHoleManager", "Failed when finding BlackHole virtual device", e)
             false
         }
     }
@@ -30,7 +30,7 @@ object BlackHoleManager {
             ProcessBuilder("which", SWITCH_AUDIO_COMMAND)
                 .redirectErrorStream(true).start().waitFor() == 0
         } catch (e: Exception) {
-            Logger.e("BlackHoleManager", "检测 SwitchAudioSource 时出错", e)
+            Logger.e("BlackHoleManager", "Failed when finding SwitchAudioSource", e)
             false
         }
     }
@@ -45,7 +45,7 @@ object BlackHoleManager {
             val output = process.inputStream.bufferedReader().readText()
             if (process.waitFor() == 0 && output.isNotBlank()) output else null
         } catch (e: Exception) {
-            Logger.e("BlackHoleManager", "获取输入设备 JSON 时出错", e)
+            Logger.e("BlackHoleManager", "Failed when fetching device list in json", e)
             null
         }
     }
@@ -54,7 +54,7 @@ object BlackHoleManager {
         return try {
             parseDevicesJson(json).find { BLACKHOLE_PATTERN.matches(it.name) }
         } catch (e: Exception) {
-            Logger.e("BlackHoleManager", "解析 BlackHole 设备 JSON 时出错", e)
+            Logger.e("BlackHoleManager", "Failed when parsing json to find BlackHole", e)
             null
         }
     }
@@ -84,7 +84,7 @@ object BlackHoleManager {
             ProcessBuilder(SWITCH_AUDIO_COMMAND, "-t", "input", "-i", deviceId)
                 .redirectErrorStream(true).start().waitFor() == 0
         } catch (e: Exception) {
-            Logger.e("BlackHoleManager", "设置默认输入设备时出错", e)
+            Logger.e("BlackHoleManager", "Failed when setting default device", e)
             false
         }
     }
@@ -104,7 +104,7 @@ object BlackHoleManager {
                 if (id != null && name != null) AudioDevice(id, name, uid ?: "") else null
             } else null
         } catch (e: Exception) {
-            Logger.e("BlackHoleManager", "获取当前输入设备时出错", e)
+            Logger.e("BlackHoleManager", "Failed when fetching device list", e)
             null
         }
     }
@@ -114,7 +114,7 @@ object BlackHoleManager {
 
         getCurrentInputDevice()?.let {
             originalInputDevice = it
-            Logger.i("BlackHoleManager", "已保存原始输入设备: ${it.name}")
+            Logger.i("BlackHoleManager", "Saved the original input device: ${it.name}")
         }
     }
 
@@ -124,7 +124,7 @@ object BlackHoleManager {
         if (getCurrentInputDevice()?.id == device.id) return true
 
         return setDefaultInputDevice(device.id).also {
-            if (it) Logger.i("BlackHoleManager", "已恢复原始输入设备: ${device.name}")
+            if (it) Logger.i("BlackHoleManager", "Restore to original device: ${device.name}")
         }
     }
 
