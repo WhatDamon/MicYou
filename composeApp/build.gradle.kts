@@ -280,6 +280,11 @@ val copyAssetsCar by tasks.registering(Copy::class) {
     into(layout.buildDirectory.dir("compose/binaries/main/app/${project.property("project.name")}.app/Contents/Resources"))
 }
 
+tasks.matching { it.name == "createDistributable" }
+    .configureEach {
+        finalizedBy(copyAssetsCar)
+}
+
 // Windows/macOS 打包时执行 copyTrayIcon
 tasks.matching { it.name in setOf("createDistributable", "createReleaseDistributable") }
     .configureEach {
@@ -288,6 +293,7 @@ tasks.matching { it.name in setOf("createDistributable", "createReleaseDistribut
 tasks.matching { it.name.startsWith("packageDmg") }
     .configureEach {
         dependsOn(copyTrayIcon)
+        dependsOn("createDistributable")
         dependsOn(copyAssetsCar)
     }
 
