@@ -38,7 +38,7 @@ fun App(
         derivedStateOf { state.value.language }
     }
     
-    val strings = getStrings(language)
+    val strings = remember(language) { getStrings(language) }
 
     val uiState by finalViewModel.uiState.collectAsState()
     val newVersionAvailable = uiState.newVersionAvailable
