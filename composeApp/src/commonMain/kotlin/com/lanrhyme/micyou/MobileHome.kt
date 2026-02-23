@@ -166,18 +166,16 @@ fun MobileHome(viewModel: MainViewModel) {
 
                     // Inputs
                     Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        if (isClient) {
+                        if (isClient && state.mode != ConnectionMode.Usb) {
                              OutlinedTextField(
                                 value = when (state.mode) {
-                                    ConnectionMode.Usb -> "127.0.0.1"
                                     ConnectionMode.Bluetooth -> state.bluetoothAddress
                                     else -> state.ipAddress
                                 },
-                                onValueChange = { if (state.mode != ConnectionMode.Usb) viewModel.setIp(it) },
+                                onValueChange = { viewModel.setIp(it) },
                                 label = {
                                     Text(
                                         when (state.mode) {
-                                            ConnectionMode.Usb -> strings.targetIpUsbLabel
                                             ConnectionMode.Bluetooth -> strings.bluetoothAddressLabel
                                             else -> strings.targetIpLabel
                                         }
@@ -186,8 +184,7 @@ fun MobileHome(viewModel: MainViewModel) {
                                 modifier = if (state.mode == ConnectionMode.Bluetooth) Modifier.fillMaxWidth() else Modifier.weight(1f),
                                 singleLine = true,
                                 shape = RoundedCornerShape(12.dp),
-                                textStyle = MaterialTheme.typography.bodyMedium,
-                                readOnly = state.mode == ConnectionMode.Usb
+                                textStyle = MaterialTheme.typography.bodyMedium
                             )
                         }
                         if (state.mode != ConnectionMode.Bluetooth) {
@@ -195,7 +192,7 @@ fun MobileHome(viewModel: MainViewModel) {
                                 value = state.port,
                                 onValueChange = { viewModel.setPort(it) },
                                 label = { Text(strings.portLabel) },
-                                modifier = if (isClient) Modifier.width(100.dp) else Modifier.fillMaxWidth(),
+                                modifier = if (isClient && state.mode != ConnectionMode.Usb) Modifier.width(100.dp) else Modifier.fillMaxWidth(),
                                 singleLine = true,
                                 shape = RoundedCornerShape(12.dp),
                                 textStyle = MaterialTheme.typography.bodyMedium
