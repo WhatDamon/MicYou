@@ -142,6 +142,9 @@ This project is built using Kotlin Multiplatform.
 ```bash
 ./gradlew :composeApp:packageRpm
 ```
+## Translate to your language 
+
+[Crowdin](https://crowdin.com/project/micyou)
 
 ## Star History
 
